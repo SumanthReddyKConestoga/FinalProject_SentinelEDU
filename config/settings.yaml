@@ -1,0 +1,51 @@
+app:
+  name: SentinelEDU
+  version: 0.1.0
+  debug: true
+
+paths:
+  data_raw: data/raw
+  data_processed: data/processed
+  data_streaming: data/streaming
+  artifacts: artifacts
+  models: models
+  reports: reports
+
+data:
+  random_state: 42
+  test_size: 0.15
+  val_size: 0.15
+  sequence_window: 8
+  sequence_features:
+    - weekly_attendance_pct
+    - weekly_quiz_score
+    - weekly_submission_rate
+    - weekly_lms_logins
+    - weekly_late_count
+
+targets:
+  regression: G3
+  classification: risk_class
+  risk_bins:
+    high_max: 10    # G3 < 10 => High risk
+    medium_max: 14  # 10 <= G3 < 14 => Medium risk; >=14 => Low risk
+
+training:
+  cv_folds: 5
+  deep:
+    epochs: 60
+    batch_size: 32
+    patience: 10
+    learning_rate: 0.001
+
+streaming:
+  rate_events_per_sec: 2
+  window_size: 8
+  stream_file: data/streaming/events.jsonl
+
+api:
+  host: 0.0.0.0
+  port: 8000
+
+database:
+  url: sqlite:///./sentinel.db

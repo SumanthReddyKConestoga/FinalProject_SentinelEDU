@@ -1,0 +1,89 @@
+stages:
+  load_data:
+    cmd: python -m src.training.stage_load_data
+    deps:
+      - src/training/stage_load_data.py
+      - src/data/loader.py
+    outs:
+      - data/raw/student_performance.csv
+
+  preprocess:
+    cmd: python -m src.training.stage_preprocess
+    deps:
+      - src/training/stage_preprocess.py
+      - src/data/augmentor.py
+      - src/preprocessing/preprocessor.py
+      - src/preprocessing/feature_engineer.py
+      - data/raw/student_performance.csv
+      - config/settings.yaml
+    outs:
+      - data/processed/static_train.parquet
+      - data/processed/static_val.parquet
+      - data/processed/static_test.parquet
+      - data/processed/static_all.parquet
+      - data/processed/static_streaming.parquet
+      - data/processed/weekly.parquet
+      - data/streaming/events.jsonl
+      - artifacts/preprocessor.pkl
+
+  train_classical:
+    cmd: python -m src.training.stage_train_classical
+    deps:
+      - src/training/stage_train_classical.py
+      - src/models/regression.py
+      - src/models/classification.py
+      - src/models/clustering.py
+      - src/evaluation/metrics.py
+      - src/evaluation/cross_validation.py
+      - src/evaluation/plots.py
+      - data/processed/static_train.parquet
+      - data/processed/static_test.parquet
+      - artifacts/preprocessor.pkl
+    outs:
+      - models/regression
+      - models/classification
+      - models/clustering
+    metrics:
+      - reports/regression_metrics.json:
+          cache: false
+      - reports/classification_metrics.json:
+          cache: false
+      - reports/clustering_metrics.json:
+          cache: false
+
+  train_deep:
+    cmd: python -m src.training.stage_train_deep
+    deps:
+      - src/training/stage_train_deep.py
+      - src/models/deep.py
+      - src/models/cnn.py
+      - src/preprocessing/sequence_builder.py
+      - data/processed/static_train.parquet
+      - data/processed/static_val.parquet
+      - data/processed/static_test.parquet
+      - data/processed/weekly.parquet
+      - data/processed/static_all.parquet
+      - artifacts/preprocessor.pkl
+    outs:
+      - models/deep
+      - models/cnn
+    metrics:
+      - reports/deep_metrics.json:
+          cache: false
+      - reports/cnn_metrics.json:
+          cache: false
+
+  evaluate:
+    cmd: python -m src.training.stage_evaluate
+    deps:
+      - src/training/stage_evaluate.py
+      - reports/regression_metrics.json
+      - reports/classification_metrics.json
+      - reports/clustering_metrics.json
+      - reports/deep_metrics.json
+      - reports/cnn_metrics.json
+    outs:
+      - reports/model_comparison.md:
+          cache: false
+      - config/model_registry.json:
+          cache: false

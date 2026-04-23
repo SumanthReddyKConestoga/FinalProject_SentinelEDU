@@ -1,0 +1,46 @@
+# Core
+python-dotenv==1.0.1
+pyyaml==6.0.2
+pydantic==2.8.2
+pydantic-settings==2.4.0
+
+# Data
+pandas==2.2.2
+numpy==1.26.4
+pyarrow==16.1.0
+
+# ML
+scikit-learn==1.5.1
+joblib==1.4.2
+
+# Deep Learning (use tensorflow-cpu if GPU setup fights you)
+tensorflow==2.17.0
+
+# Visualization
+matplotlib==3.9.1
+seaborn==0.13.2
+plotly==5.22.0
+
+# Backend
+fastapi==0.112.0
+uvicorn[standard]==0.30.5
+sqlalchemy==2.0.32
+
+# Dashboard
+streamlit==1.37.1
+
+# HTTP
+requests==2.32.3
+httpx==0.27.0
+
+# Pipeline
+dvc==3.53.2
+
+# Dataset download
+ucimlrepo==0.0.7
+
+# RAG
+sentence-transformers>=3.0.0
+faiss-cpu>=1.7.4
+anthropic>=0.34.0
+tf-keras>=2.16.0  # sentence-transformers compat shim for TF 2.17+

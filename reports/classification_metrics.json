@@ -1,0 +1,118 @@
+{
+  "logistic_regression": {
+    "accuracy": 0.7666666666666667,
+    "precision_macro": 0.7771363893604981,
+    "recall_macro": 0.7497479330510184,
+    "f1_macro": 0.7611376927166401,
+    "confusion_matrix": [
+      [
+        8,
+        4,
+        0
+      ],
+      [
+        2,
+        23,
+        4
+      ],
+      [
+        0,
+        4,
+        15
+      ]
+    ],
+    "labels": [
+      "High",
+      "Medium",
+      "Low"
+    ],
+    "roc_auc_ovr": null
+  },
+  "knn_classifier": {
+    "accuracy": 0.7666666666666667,
+    "precision_macro": 0.7660314579552329,
+    "recall_macro": 0.7660314579552329,
+    "f1_macro": 0.7660314579552329,
+    "confusion_matrix": [
+      [
+        9,
+        3,
+        0
+      ],
+      [
+        3,
+        22,
+        4
+      ],
+      [
+        0,
+        4,
+        15
+      ]
+    ],
+    "labels": [
+      "High",
+      "Medium",
+      "Low"
+    ],
+    "roc_auc_ovr": null
+  },
+  "decision_tree_classifier": {
+    "accuracy": 0.7833333333333333,
+    "precision_macro": 0.7896825396825397,
+    "recall_macro": 0.7938092357330108,
+    "f1_macro": 0.7914979757085021,
+    "confusion_matrix": [
+      [
+        10,
+        2,
+        0
+      ],
+      [
+        2,
+        22,
+        5
+      ],
+      [
+        0,
+        4,
+        15
+      ]
+    ],
+    "labels": [
+      "High",
+      "Medium",
+      "Low"
+    ],
+    "roc_auc_ovr": null
+  },
+  "naive_bayes": {
+    "accuracy": 0.75,
+    "precision_macro": 0.7558041958041959,
+    "recall_macro": 0.7829199435370034,
+    "f1_macro": 0.7595365418894832,
+    "confusion_matrix": [
+      [
+        10,
+        2,
+        0
+      ],
+      [
+        3,
+        18,
+        8
+      ],
+      [
+        0,
+        2,
+        17
+      ]
+    ],
+    "labels": [
+      "High",
+      "Medium",
+      "Low"
+    ],
+    "roc_auc_ovr": null
+  }
+}

@@ -1,0 +1,20 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(pip install *)",
+      "Bash(python -c \"import joblib, sklearn, numpy, pandas; print\\('Core ML libs OK'\\)\")",
+      "Bash(python -c \"import tensorflow; print\\('TF OK', tensorflow.__version__\\)\")",
+      "Bash(python -c \"import dvc; print\\('DVC OK'\\)\")",
+      "Bash(python -c \"import fastapi, uvicorn, sqlalchemy, streamlit, requests; print\\('Web stack OK'\\)\")",
+      "Bash(dvc init *)",
+      "Bash(python -m src.training.stage_load_data)",
+      "Bash(python -m src.training.stage_preprocess)",
+      "Bash(python -m src.training.stage_train_classical)",
+      "Bash(python -c \"import matplotlib; print\\(matplotlib.__version__, matplotlib.__file__\\)\")",
+      "Bash(pip download *)",
+      "Bash(python -m src.training.stage_train_deep)",
+      "Bash(python -m src.training.stage_evaluate)",
+      "Bash(python -m src.db.seed)"
+    ]
+  }
+}

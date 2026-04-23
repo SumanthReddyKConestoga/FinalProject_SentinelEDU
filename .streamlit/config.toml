@@ -1,0 +1,18 @@
+[server]
+# Prevent "Stream idle timeout" on pages with heavy API calls
+maxUploadSize = 50
+enableWebsocketCompression = false
+# Keep websocket alive — critical for Model Performance page
+headless = true
+
+[browser]
+# How long the browser waits for a server response before showing timeout error (seconds)
+serverTimeout = 120
+
+[runner]
+# Allow magic commands and avoid re-run race conditions
+magicEnabled = true
+fastReruns = true
+
+[theme]
+base = "light"

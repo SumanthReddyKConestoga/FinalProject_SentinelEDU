@@ -1,0 +1,29 @@
+{
+  "accuracy": 0.77,
+  "precision_macro": 0.7915403274711946,
+  "recall_macro": 0.7647005444646098,
+  "f1_macro": 0.7761625261625262,
+  "confusion_matrix": [
+    [
+      45,
+      15,
+      0
+    ],
+    [
+      6,
+      114,
+      25
+    ],
+    [
+      0,
+      23,
+      72
+    ]
+  ],
+  "labels": [
+    "High",
+    "Medium",
+    "Low"
+  ],
+  "roc_auc_ovr": null
+}

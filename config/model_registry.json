@@ -1,0 +1,29 @@
+{
+  "production": {
+    "regression": "ridge_regression",
+    "classification": "mlp",
+    "cnn": "cnn1d",
+    "clustering": "kmeans"
+  },
+  "candidates": {
+    "regression": [
+      "linear_regression",
+      "ridge_regression",
+      "knn_regressor",
+      "decision_tree_regressor"
+    ],
+    "classification": [
+      "logistic_regression",
+      "knn_classifier",
+      "decision_tree_classifier",
+      "naive_bayes",
+      "slp",
+      "mlp",
+      "TunedANN_A_small",
+      "TunedANN_B_medium",
+      "TunedANN_C_wide",
+      "cnn1d"
+    ]
+  },
+  "last_updated": "2026-04-22T00:57:08.289224"
+}

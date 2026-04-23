@@ -1,0 +1,100 @@
+rules:
+  - id: attendance_drop
+    description: "Attendance dropped significantly in the last week"
+    condition_type: threshold
+    feature: weekly_attendance_pct
+    operator: lt
+    value: 70
+    severity: medium
+    cooldown_hours: 24
+
+  - id: quiz_decline
+    description: "Quiz scores declining over recent submissions"
+    condition_type: slope
+    feature: quiz_score_slope_3
+    operator: lt
+    value: -1.0
+    severity: medium
+    cooldown_hours: 24
+
+  - id: late_submissions
+    description: "Multiple late submissions in the last week"
+    condition_type: threshold
+    feature: weekly_late_count
+    operator: gte
+    value: 2
+    severity: low
+    cooldown_hours: 48
+
+  - id: predicted_final_low
+    description: "Regression model predicts final grade below passing threshold"
+    condition_type: threshold
+    feature: regression_prediction
+    operator: lt
+    value: 10
+    severity: high
+    cooldown_hours: 24
+
+  - id: classifier_high_risk
+    description: "Classifier flags student as High Risk with high confidence"
+    condition_type: compound
+    conditions:
+      - {feature: classifier_label, operator: eq, value: High}
+      - {feature: classifier_confidence, operator: gt, value: 0.75}
+    severity: high
+    cooldown_hours: 24
+
+  - id: cnn_sustained_risk
+    description: "CNN detects sustained decline pattern across recent windows"
+    condition_type: threshold
+    feature: cnn_high_risk_consecutive
+    operator: gte
+    value: 3
+    severity: critical
+    cooldown_hours: 12
+
+recommendations:
+  attendance_drop:
+    actions:
+      - action: attendance_intervention
+        rationale: "Send attendance check-in email and notify advisor"
+        priority: 0.70
+
+  quiz_decline:
+    actions:
+      - action: tutoring_referral
+        rationale: "Quiz scores declining; module-targeted tutoring recommended"
+        priority: 0.75
+
+  late_submissions:
+    actions:
+      - action: study_plan_generation
+        rationale: "Frequent late submissions suggest time management support needed"
+        priority: 0.55
+
+  predicted_final_low:
+    actions:
+      - action: advisor_meeting
+        rationale: "Predicted final grade below passing threshold"
+        priority: 0.85
+      - action: tutoring_referral
+        rationale: "Academic support recommended"
+        priority: 0.70
+
+  classifier_high_risk:
+    actions:
+      - action: advisor_meeting
+        rationale: "Classified as High Risk with high confidence"
+        priority: 0.88
+
+  cnn_sustained_risk:
+    actions:
+      - action: advisor_meeting
+        rationale: "Sustained decline pattern detected by CNN"
+        priority: 0.95
+      - action: counseling_referral
+        rationale: "Prolonged risk warrants non-academic support check-in"
+        priority: 0.80
+      - action: academic_probation_review
+        rationale: "Formal institutional review recommended"
+        priority: 0.75

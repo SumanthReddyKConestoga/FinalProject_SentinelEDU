@@ -1,0 +1,45 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+env/
+.venv/
+*.egg-info/
+.pytest_cache/
+
+# Environment
+.env
+
+# DB
+*.db
+*.sqlite
+*.sqlite3
+
+# DVC
+.dvc/cache
+.dvc/tmp
+.dvc/config.local
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Model artifacts that DVC tracks (don't double-track in git)
+# The DVC pipeline outputs are managed by DVC, not git.
+/models/
+/artifacts/
+/data/raw/
+/data/processed/
+/data/streaming/
+/reports/figures/

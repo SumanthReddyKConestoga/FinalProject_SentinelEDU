@@ -1,0 +1,16 @@
+{
+  "silhouette_score": 0.05544333216674402,
+  "n_clusters": 4,
+  "segment_names": {
+    "0": "Consistent High Performers",
+    "1": "Improving Students",
+    "2": "Disengaged Students",
+    "3": "High-Risk Students"
+  },
+  "cluster_sizes": {
+    "0": 54,
+    "1": 85,
+    "2": 86,
+    "3": 54
+  }
+}

@@ -1,0 +1,147 @@
+{
+  "slp": {
+    "accuracy": 0.7833333333333333,
+    "precision_macro": 0.8159041394335512,
+    "recall_macro": 0.7551925791490218,
+    "f1_macro": 0.7777777777777777,
+    "confusion_matrix": [
+      [
+        8,
+        4,
+        0
+      ],
+      [
+        1,
+        25,
+        3
+      ],
+      [
+        0,
+        5,
+        14
+      ]
+    ],
+    "labels": [
+      "High",
+      "Medium",
+      "Low"
+    ],
+    "roc_auc_ovr": null
+  },
+  "mlp": {
+    "accuracy": 0.8,
+    "precision_macro": 0.8270350564468213,
+    "recall_macro": 0.7829703569267998,
+    "f1_macro": 0.8008037362876074,
+    "confusion_matrix": [
+      [
+        9,
+        3,
+        0
+      ],
+      [
+        1,
+        25,
+        3
+      ],
+      [
+        0,
+        5,
+        14
+      ]
+    ],
+    "labels": [
+      "High",
+      "Medium",
+      "Low"
+    ],
+    "roc_auc_ovr": null
+  },
+  "TunedANN_A_small": {
+    "accuracy": 0.45,
+    "precision_macro": 0.46645161290322584,
+    "recall_macro": 0.4215567654769106,
+    "f1_macro": 0.4048148148148148,
+    "confusion_matrix": [
+      [
+        2,
+        7,
+        3
+      ],
+      [
+        2,
+        12,
+        15
+      ],
+      [
+        0,
+        6,
+        13
+      ]
+    ],
+    "labels": [
+      "High",
+      "Medium",
+      "Low"
+    ],
+    "roc_auc_ovr": null
+  },
+  "TunedANN_B_medium": {
+    "accuracy": 0.43333333333333335,
+    "precision_macro": 0.27777777777777773,
+    "recall_macro": 0.34724742891712035,
+    "f1_macro": 0.3086463923673226,
+    "confusion_matrix": [
+      [
+        0,
+        7,
+        5
+      ],
+      [
+        0,
+        18,
+        11
+      ],
+      [
+        0,
+        11,
+        8
+      ]
+    ],
+    "labels": [
+      "High",
+      "Medium",
+      "Low"
+    ],
+    "roc_auc_ovr": null
+  },
+  "TunedANN_C_wide": {
+    "accuracy": 0.45,
+    "precision_macro": 0.40868838763575605,
+    "recall_macro": 0.3852591248235531,
+    "f1_macro": 0.3865348181692158,
+    "confusion_matrix": [
+      [
+        2,
+        8,
+        2
+      ],
+      [
+        5,
+        18,
+        6
+      ],
+      [
+        0,
+        12,
+        7
+      ]
+    ],
+    "labels": [
+      "High",
+      "Medium",
+      "Low"
+    ],
+    "roc_auc_ovr": null
+  }
+}

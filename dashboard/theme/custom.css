@@ -1,0 +1,442 @@
+/* SentinelEDU — Clean Modern Theme v3 */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Space+Grotesk:wght@300;400;500;600;700&family=Instrument+Serif:ital@0;1&display=swap');
+
+:root {
+  --low:            #10B981;
+  --low-bg:         #ECFDF5;
+  --low-text:       #065F46;
+  --medium:         #F59E0B;
+  --medium-bg:      #FFFBEB;
+  --medium-text:    #92400E;
+  --high:           #EF4444;
+  --high-bg:        #FEF2F2;
+  --high-text:      #991B1B;
+  --critical:       #DC2626;
+  --critical-bg:    #FEE2E2;
+  --critical-text:  #7F1D1D;
+  --bg:             #EEF2FB;
+  --card:           #FFFFFF;
+  --sidebar-bg:     #111827;
+  --sidebar-2:      #1F2937;
+  --text:           #0F172A;
+  --text-2:         #1E293B;
+  --text-3:         #64748B;
+  --muted:          #94A3B8;
+  --border:         #E2E8F2;
+  --accent:         #2563EB;
+  --accent-dark:    #1D4ED8;
+  --accent-light:   #EFF6FF;
+  --radius:         16px;
+  --radius-sm:      10px;
+  --shadow:         0 1px 3px rgba(15,23,42,.05),0 2px 8px rgba(37,99,235,.04);
+  --shadow-md:      0 4px 16px rgba(15,23,42,.08),0 2px 6px rgba(37,99,235,.06);
+  --shadow-lg:      0 12px 32px rgba(15,23,42,.12),0 4px 12px rgba(37,99,235,.08);
+}
+
+/* ── Base ─────────────────────────────────────────────────────────────────── */
+html, body { background: var(--bg) !important; }
+
+.stApp {
+  background: var(--bg) !important;
+  font-family: 'Inter', system-ui, -apple-system, sans-serif !important;
+  color: var(--text) !important;
+}
+
+.main .block-container {
+  padding: 1.75rem 2.25rem 3rem !important;
+  max-width: 1440px !important;
+}
+
+/* ── Sidebar — Clean White Professional ───────────────────────────────────── */
+
+[data-testid="stSidebar"] {
+  background: #FFFFFF !important;
+  border-right: 1px solid #E2E8F0 !important;
+  box-shadow: 2px 0 16px rgba(15,23,42,0.06) !important;
+}
+
+[data-testid="stSidebar"] > div:first-child { background: transparent !important; }
+
+[data-testid="stSidebar"] .stMarkdown h2 {
+  font-family: 'Space Grotesk', sans-serif !important;
+  color: #0F172A !important;
+  font-size: 0.9rem !important;
+  font-weight: 700 !important;
+  letter-spacing: -0.01em !important;
+  margin: 0 !important;
+}
+
+[data-testid="stSidebar"] .stMarkdown p {
+  font-family: 'Space Grotesk', sans-serif !important;
+  color: #94A3B8 !important;
+  font-size: 0.68rem !important;
+  font-weight: 500 !important;
+  letter-spacing: 0.02em !important;
+  margin: 0 !important;
+}
+
+[data-testid="stSidebar"] hr {
+  border: none !important;
+  border-top: 1px solid #F1F5F9 !important;
+  margin: 0.6rem 0 !important;
+}
+
+[data-testid="stSidebar"] .stButton > button {
+  font-family: 'Space Grotesk', sans-serif !important;
+  background: #F8FAFC !important;
+  color: #475569 !important;
+  border: 1px solid #E2E8F0 !important;
+  font-size: 0.74rem !important;
+  font-weight: 600 !important;
+  border-radius: 8px !important;
+  letter-spacing: 0.02em !important;
+  transition: all 0.2s cubic-bezier(0.34,1.56,0.64,1) !important;
+}
+
+[data-testid="stSidebar"] .stButton > button:hover {
+  background: #EFF6FF !important;
+  color: #1D4ED8 !important;
+  border-color: #BFDBFE !important;
+  box-shadow: 0 2px 8px rgba(37,99,235,0.12) !important;
+  transform: translateY(-1px) !important;
+}
+
+[data-testid="stSidebar"] .stCaption,
+[data-testid="stSidebar"] small {
+  font-family: 'Space Grotesk', sans-serif !important;
+  color: #94A3B8 !important;
+  font-size: 0.64rem !important;
+}
+
+/* ── Nav container ────────────────────────────────────────────────────────── */
+[data-testid="stSidebarNav"] {
+  padding: 0 0.5rem 0.75rem !important;
+}
+
+/* Brand wordmark — ASCII only, no unicode encoding issues */
+[data-testid="stSidebarNav"]::before {
+  content: "SentinelEDU";
+  display: block;
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 1.1rem;
+  font-weight: 800;
+  color: #0F172A;
+  letter-spacing: -0.03em;
+  padding: 1.4rem 0.95rem 0.65rem;
+  border-bottom: 2px solid #EEF2FB;
+  margin-bottom: 0.5rem;
+}
+
+/* ── Hide the "app" root page that Streamlit adds as item 1 ─────────────── */
+[data-testid="stSidebarNav"] li { list-style: none; }
+[data-testid="stSidebarNav"] li:nth-child(1) { display: none !important; }
+
+/* ── Section labels — offset by 1 because "app" item is hidden ──────────── */
+
+/* Home = item 2 → OVERVIEW */
+[data-testid="stSidebarNav"] li:nth-child(2)::before {
+  content: "OVERVIEW";
+  display: block;
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 0.55rem;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  color: #CBD5E1;
+  padding: 0.55rem 0.95rem 0.28rem;
+}
+
+/* Roster = item 3 → STUDENTS */
+[data-testid="stSidebarNav"] li:nth-child(3)::before {
+  content: "STUDENTS";
+  display: block;
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 0.55rem;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  color: #CBD5E1;
+  padding: 0.65rem 0.95rem 0.28rem;
+}
+
+/* Alerts = item 5 → OPERATIONS */
+[data-testid="stSidebarNav"] li:nth-child(5)::before {
+  content: "OPERATIONS";
+  display: block;
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 0.55rem;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  color: #CBD5E1;
+  padding: 0.65rem 0.95rem 0.28rem;
+  border-top: 1px solid #F1F5F9;
+  margin-top: 0.35rem;
+}
+
+/* Model Performance = item 6 → ANALYTICS */
+[data-testid="stSidebarNav"] li:nth-child(6)::before {
+  content: "ANALYTICS";
+  display: block;
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 0.55rem;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  color: #CBD5E1;
+  padding: 0.45rem 0.95rem 0.28rem;
+}
+
+/* ── Nav link — base ─────────────────────────────────────────────────────── */
+[data-testid="stSidebarNav"] a {
+  font-family: 'Space Grotesk', sans-serif !important;
+  color: #64748B !important;
+  font-size: 0.845rem !important;
+  font-weight: 500 !important;
+  border-radius: 9px !important;
+  padding: 0.58rem 2.2rem 0.58rem 0.9rem !important;
+  transition: all 0.22s cubic-bezier(0.34,1.56,0.64,1) !important;
+  margin-bottom: 1px !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 0.5rem !important;
+  border-left: 2px solid transparent !important;
+  position: relative !important;
+  letter-spacing: 0.01em !important;
+}
+
+/* ── Hover — spring nudge right ─────────────────────────────────────────── */
+[data-testid="stSidebarNav"] a:hover {
+  color: #1E293B !important;
+  background: #F8FAFC !important;
+  border-left-color: #BFDBFE !important;
+  transform: translateX(2px) !important;
+}
+
+/* ── Active — blue pill, solid left bar, indicator dot ──────────────────── */
+[data-testid="stSidebarNav"] a[aria-selected="true"] {
+  color: #1D4ED8 !important;
+  font-weight: 700 !important;
+  background: #EFF6FF !important;
+  border-left: 2px solid #2563EB !important;
+  box-shadow: none !important;
+  transform: none !important;
+  letter-spacing: 0.01em !important;
+}
+
+[data-testid="stSidebarNav"] a[aria-selected="true"]::after {
+  content: "";
+  position: absolute;
+  right: 0.85rem;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #2563EB;
+  box-shadow: 0 0 0 3px rgba(37,99,235,0.18);
+  pointer-events: none;
+}
+
+/* ── Typography ───────────────────────────────────────────────────────────── */
+h1 {
+  font-size: 1.65rem !important;
+  font-weight: 800 !important;
+  color: var(--text) !important;
+  letter-spacing: -0.03em !important;
+  line-height: 1.2 !important;
+}
+
+h2 { font-size: 1.1rem !important; font-weight: 700 !important; color: var(--text) !important; }
+
+/* ── st.metric ────────────────────────────────────────────────────────────── */
+[data-testid="metric-container"] {
+  background: var(--card) !important;
+  border: 1px solid var(--border) !important;
+  border-radius: var(--radius) !important;
+  padding: 1.3rem 1.5rem !important;
+  box-shadow: var(--shadow) !important;
+  transition: box-shadow 0.2s ease, transform 0.2s ease !important;
+}
+
+[data-testid="metric-container"]:hover {
+  box-shadow: var(--shadow-md) !important;
+  transform: translateY(-2px) !important;
+}
+
+[data-testid="stMetricLabel"] > div {
+  color: var(--text-3) !important;
+  font-size: 0.7rem !important;
+  font-weight: 700 !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.09em !important;
+}
+
+[data-testid="stMetricValue"] > div {
+  color: var(--text) !important;
+  font-size: 2rem !important;
+  font-weight: 800 !important;
+  letter-spacing: -0.04em !important;
+}
+
+/* ── Buttons ──────────────────────────────────────────────────────────────── */
+.stButton > button {
+  border-radius: 10px !important;
+  font-weight: 600 !important;
+  font-size: 0.82rem !important;
+  padding: 0.48rem 1.2rem !important;
+  border: 1.5px solid var(--border) !important;
+  background: var(--card) !important;
+  color: var(--text-2) !important;
+  transition: all 0.18s cubic-bezier(0.4,0,0.2,1) !important;
+  cursor: pointer !important;
+}
+
+.stButton > button:hover {
+  background: var(--accent) !important;
+  color: #fff !important;
+  border-color: var(--accent) !important;
+  box-shadow: 0 4px 14px rgba(37,99,235,.3) !important;
+  transform: translateY(-1px) !important;
+}
+
+.stButton > button:active { transform: translateY(0) !important; }
+
+/* ── Inputs ───────────────────────────────────────────────────────────────── */
+.stTextInput input {
+  border-radius: var(--radius-sm) !important;
+  border: 1.5px solid var(--border) !important;
+  background: var(--card) !important;
+  font-size: 0.875rem !important;
+  color: var(--text) !important;
+  transition: border-color 0.15s, box-shadow 0.15s !important;
+}
+
+.stTextInput input:focus {
+  border-color: var(--accent) !important;
+  box-shadow: 0 0 0 3px rgba(37,99,235,.11) !important;
+  outline: none !important;
+}
+
+.stSelectbox > div > div {
+  border-radius: var(--radius-sm) !important;
+  border: 1.5px solid var(--border) !important;
+  background: var(--card) !important;
+}
+
+/* ── Tabs ─────────────────────────────────────────────────────────────────── */
+.stTabs [data-baseweb="tab-list"] {
+  background: #DDE5F7 !important;
+  border-radius: 12px !important;
+  padding: 0.28rem !important;
+  gap: 0.1rem !important;
+  border: none !important;
+}
+
+.stTabs [data-baseweb="tab"] {
+  font-weight: 600 !important;
+  font-size: 0.8rem !important;
+  color: var(--text-3) !important;
+  border-radius: 9px !important;
+  padding: 0.45rem 1rem !important;
+  border: none !important;
+  background: transparent !important;
+  transition: all 0.15s ease !important;
+}
+
+.stTabs [data-baseweb="tab"]:hover {
+  color: var(--text) !important;
+  background: rgba(255,255,255,.55) !important;
+}
+
+.stTabs [data-baseweb="tab"][aria-selected="true"] {
+  color: var(--accent) !important;
+  background: var(--card) !important;
+  box-shadow: 0 2px 8px rgba(37,99,235,.12) !important;
+  font-weight: 700 !important;
+}
+
+/* ── DataFrames ───────────────────────────────────────────────────────────── */
+[data-testid="stDataFrame"] {
+  border-radius: var(--radius) !important;
+  overflow: hidden !important;
+  box-shadow: var(--shadow) !important;
+  border: 1px solid var(--border) !important;
+}
+
+/* ── Plotly charts ────────────────────────────────────────────────────────── */
+[data-testid="stPlotlyChart"] {
+  border-radius: var(--radius) !important;
+  background: var(--card) !important;
+  padding: 0.5rem !important;
+  box-shadow: var(--shadow) !important;
+  border: 1px solid var(--border) !important;
+}
+
+/* ── Scrollbar ────────────────────────────────────────────────────────────── */
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #BCC8E0; border-radius: 999px; }
+::-webkit-scrollbar-thumb:hover { background: #94A3B8; }
+
+/* ── Alerts ───────────────────────────────────────────────────────────────── */
+.stAlert, .stSuccess, .stError, .stWarning, .stInfo {
+  border-radius: var(--radius) !important;
+}
+
+/* ── Stream pulse ─────────────────────────────────────────────────────────── */
+.stream-dot {
+  width: 8px; height: 8px; border-radius: 50%;
+  display: inline-block; margin-right: .4rem;
+  vertical-align: middle; position: relative; top: -1px;
+}
+.stream-dot.active  { background: var(--low); animation: pulse-live 2s ease-in-out infinite; }
+.stream-dot.inactive { background: #6B7280; }
+
+@keyframes pulse-live {
+  0%   { box-shadow: 0 0 0 0   rgba(16,185,129,0.6); }
+  60%  { box-shadow: 0 0 0 7px rgba(16,185,129,0);   }
+  100% { box-shadow: 0 0 0 0   rgba(16,185,129,0);   }
+}
+
+/* ── Info box ─────────────────────────────────────────────────────────────── */
+.info-box {
+  background: var(--accent-light);
+  border-radius: var(--radius-sm);
+  padding: 0.85rem 1rem;
+  border-left: 3px solid var(--accent);
+  font-size: 0.85rem;
+  color: #1E40AF;
+}
+
+/* ── Section title ────────────────────────────────────────────────────────── */
+.section-title {
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--text-3);
+  padding-bottom: 0.5rem;
+  border-bottom: 2px solid var(--border);
+  margin-bottom: 0.8rem;
+}
+
+/* ── Risk / severity badges ───────────────────────────────────────────────── */
+.risk-badge {
+  display: inline-block;
+  padding: 0.22em 0.75em;
+  border-radius: 999px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+.risk-badge.Low      { background: var(--low-bg);      color: var(--low-text); }
+.risk-badge.Medium   { background: var(--medium-bg);   color: var(--medium-text); }
+.risk-badge.High     { background: var(--high-bg);     color: var(--high-text); }
+.risk-badge.Critical { background: var(--critical-bg); color: var(--critical); border: 1px solid rgba(220,38,38,.25); }
+
+/* ── Expander ─────────────────────────────────────────────────────────────── */
+.streamlit-expanderHeader {
+  background: var(--card) !important;
+  border-radius: var(--radius) !important;
+  border: 1px solid var(--border) !important;
+  font-weight: 600 !important;
+  font-size: 0.85rem !important;
+}
