@@ -1,8 +1,9 @@
 """Model registry loader — loads all production models at startup."""
-import joblib
-from pathlib import Path
 from functools import lru_cache
+from pathlib import Path
 from typing import Any
+
+import joblib
 
 from src.config import SETTINGS, resolve_path
 from src.utils.helpers import read_json
@@ -45,11 +46,11 @@ class ModelRegistry:
         self.preprocessor = Preprocessor.load()
 
         reg_name = prod.get("regression") or "ridge_regression"
-        log.info(f"Loading regression model: {reg_name}")
+        log.info("Loading regression model: %s", reg_name)
         self.regression_model = joblib.load(MODELS_DIR / "regression" / f"{reg_name}.pkl")
 
         clf_name = prod.get("classification") or "logistic_regression"
-        log.info(f"Loading classification model: {clf_name}")
+        log.info("Loading classification model: %s", clf_name)
         clf_pkl = MODELS_DIR / "classification" / f"{clf_name}.pkl"
         clf_keras = MODELS_DIR / "deep" / f"{clf_name}.keras"
         if clf_pkl.exists():
@@ -59,7 +60,7 @@ class ModelRegistry:
             self.classification_model = _load_keras(clf_keras)
             self.classification_kind = "keras"
         else:
-            log.warning(f"No model file found for {clf_name}; falling back to logistic_regression")
+            log.warning("No model file found for %s; falling back to logistic_regression", clf_name)
             self.classification_model = joblib.load(
                 MODELS_DIR / "classification" / "logistic_regression.pkl"
             )

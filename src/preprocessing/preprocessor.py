@@ -91,9 +91,8 @@ class Preprocessor:
         self.pipeline.fit(df)
         self._compute_feature_names()
         log.info(
-            f"Preprocessor fit: numeric={len(self.numeric_cols)}, "
-            f"nominal={len(self.nominal_cols)}, "
-            f"output_features={len(self.feature_names_out_)}"
+            "Preprocessor fit: numeric=%d, nominal=%d, output_features=%d",
+            len(self.numeric_cols), len(self.nominal_cols), len(self.feature_names_out_),
         )
         return self
 
@@ -112,7 +111,7 @@ class Preprocessor:
         onehot: OneHotEncoder = cat_pipe.named_steps["onehot"]
         try:
             cat_names = onehot.get_feature_names_out(self.nominal_cols).tolist()
-        except Exception:
+        except AttributeError:
             cat_names = []
         self.feature_names_out_ = numeric + cat_names
 

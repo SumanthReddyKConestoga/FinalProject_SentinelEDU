@@ -1,0 +1,1556 @@
+================================================================================
+        SENTINELEDU — COMPLETE TECHNOLOGY EXPLANATION
+        Written for someone with zero prior knowledge
+        Every technology, every choice, every reason — nothing skipped
+================================================================================
+
+
+════════════════════════════════════════════════════════════════════════════════
+SECTION 0 — WHAT IS THIS PROJECT, AND WHY DOES IT EXIST?
+════════════════════════════════════════════════════════════════════════════════
+
+ELABORATED:
+  Imagine you are a teacher or academic advisor at a school with hundreds of
+  students. Every day students attend classes, submit quizzes, log into the
+  online learning system, and turn in assignments. Some students are quietly
+  falling behind — their attendance is dropping, their quiz scores are
+  declining, they are logging into the system less and less. By the time a
+  failing grade appears on a report card, it is too late to help them.
+
+  SentinelEDU solves this problem. It is a complete software system that:
+  (1) Collects and processes student academic data.
+  (2) Trains machine learning models to predict a student's final grade and
+      classify how at-risk they are (Low / Medium / High / Critical).
+  (3) Watches a live stream of student activity in real time.
+  (4) Fires alerts the moment a student shows warning signs.
+  (5) Automatically suggests what the advisor should do next.
+  (6) Provides an AI chatbot that advisors can talk to for advice.
+  (7) Shows everything through a beautiful visual dashboard.
+
+  The system is built end-to-end: from raw data download, through machine
+  learning model training, through a live API server, all the way to a
+  web dashboard an advisor can open in any browser.
+
+SHORT SUMMARY:
+  SentinelEDU is an early-warning system that watches students in real time,
+  predicts who will fail before they actually fail, and tells advisors exactly
+  what to do about it.
+
+
+════════════════════════════════════════════════════════════════════════════════
+SECTION 1 — THE DATA SOURCE: UCI ML REPOSITORY + ucimlrepo LIBRARY
+════════════════════════════════════════════════════════════════════════════════
+
+ELABORATED:
+  Every machine learning project starts with data. Without real student data,
+  the models would have nothing to learn from.
+
+  WHAT IT IS:
+  The UCI Machine Learning Repository is a free, public library of datasets
+  maintained by the University of California, Irvine. It is one of the oldest
+  and most trusted sources of academic datasets in the world, used by
+  researchers and universities globally. The specific dataset used here is
+  called "Student Performance" — it contains real academic records of 649
+  Portuguese high school students from two schools (Gabriel Pereira and
+  Mousinho da Silveira). Each student record has 33 attributes including age,
+  sex, family background, study time, number of failures, attendance-related
+  features, and three grade measurements: G1 (first period grade), G2 (second
+  period grade), and G3 (final grade, the target we want to predict).
+
+  HOW IT IS USED:
+  We use a Python library called "ucimlrepo" (pip install ucimlrepo) to
+  download this dataset programmatically — meaning our code downloads it
+  automatically without any manual downloading. The command in the code is
+  simply `fetch_ucirepo(id=320)` which fetches Student Performance dataset
+  #320 from the repository. The raw CSV file is saved to disk and then
+  processed by the next stage of the pipeline.
+
+  WHY THIS DATASET AND NOT ANOTHER:
+  — It is real data from real students, not made up.
+  — It has the exact features needed: grades, attendance, study habits,
+    family background, social factors.
+  — It is publicly available so the project can be shared openly.
+  — It has enough rows (649 students × 8 synthetic weekly records = 5192
+    weekly data points) to train meaningful models.
+  — The G3 final grade gives us a concrete regression target (predict a
+    number 0–20) and we can derive a risk class from it.
+
+  WHY NOT OTHER DATASETS:
+  — Real school systems do not share student data publicly (privacy laws).
+  — Fully synthetic datasets would not reflect real student behavior patterns.
+  — The UCI dataset has been validated by dozens of academic papers, making
+    it scientifically credible.
+
+SHORT SUMMARY:
+  We download real Portuguese student data (649 students, 33 features) from
+  UCI ML Repository using a Python library, giving us the ground truth to
+  train all four machine learning models.
+
+
+════════════════════════════════════════════════════════════════════════════════
+SECTION 2 — THE ML PIPELINE ORCHESTRATOR: DVC (Data Version Control)
+════════════════════════════════════════════════════════════════════════════════
+
+ELABORATED:
+  WHAT IT IS:
+  DVC stands for Data Version Control. Think of it like Git (the tool
+  programmers use to track code changes) — but for data and machine learning
+  models. DVC tracks which data files you have, which models were trained on
+  which data, and what the results were. Most importantly, DVC defines a
+  "pipeline" — a series of steps that must run in order to go from raw data
+  to a trained model.
+
+  Our DVC pipeline has five stages defined in a file called dvc.yaml:
+
+  Stage 1 — load_data:
+    Downloads the raw dataset from UCI using ucimlrepo and saves it as a
+    CSV file. This only runs once; if the file already exists, DVC skips it.
+
+  Stage 2 — preprocess:
+    Takes the raw CSV and does the following:
+    - One-Hot Encoding: converts categorical columns (like "school=GP" or
+      "sex=F") into numbers that models can understand. For example,
+      sex=F becomes [1, 0] and sex=M becomes [0, 1].
+    - StandardScaler: normalizes all numeric columns so they are on the
+      same scale (mean=0, std=1). This prevents a column with values
+      0–100 from dominating a column with values 0–5.
+    - Train/Val/Test split: divides data into 80% for training, 10% for
+      validation (tuning), 10% for testing (final evaluation).
+    - Generates 8 synthetic weekly behavioral records per student
+      (attendance, quiz scores, LMS logins, late submissions) to simulate
+      the kind of weekly data a real learning management system would produce.
+    - Saves everything as Parquet files (a fast, compressed data format).
+
+  Stage 3 — train_classical:
+    Trains the "classical" (non-deep-learning) models: Ridge Regression,
+    Linear Regression, KNN, Decision Tree, and KMeans clustering.
+    Saves the trained models as .pkl files (Joblib serialization format).
+
+  Stage 4 — train_deep:
+    Trains the deep learning models: Single Layer Perceptron (SLP),
+    Multi Layer Perceptron (MLP), Fine-Tuned ANN, and 1D CNN.
+    Saves them as .keras files (Keras/TensorFlow serialization format).
+
+  Stage 5 — evaluate:
+    Loads all trained models, computes accuracy metrics, generates
+    confusion matrices, ROC curves, feature importance charts, and
+    writes a model comparison report as a Markdown file.
+
+  HOW DVC WORKS (technically):
+  DVC uses a file called dvc.yaml to define the pipeline. Each stage lists:
+  - cmd: the Python command to run
+  - deps: the input files (if they change, this stage re-runs)
+  - outs: the output files (DVC tracks these)
+  - metrics: JSON files with numbers (accuracy, MAE, etc.)
+  Running `dvc repro` executes all stages that are outdated. If Stage 2
+  outputs haven't changed, Stage 3 does not re-run. This is called
+  "smart caching" and saves enormous amounts of compute time.
+
+  WHY DVC AND NOT JUST RUNNING PYTHON SCRIPTS MANUALLY:
+  — Without DVC, you would manually run 5 scripts in the right order every
+    time and hope you didn't forget one.
+  — DVC guarantees reproducibility: anyone can run `dvc repro` and get
+    exactly the same results.
+  — DVC tracks which version of data produced which version of the model.
+  — DVC integrates with Git: you can go back in history and reproduce any
+    past model.
+  — Alternative: MLflow. But MLflow is heavier and more focused on
+    experiment tracking than pipeline definition. DVC is lighter and
+    integrates cleanly with the Git workflow this project already uses.
+
+SHORT SUMMARY:
+  DVC is the project's build system for machine learning. It runs 5 stages
+  in order (download → preprocess → train → evaluate) and is smart enough
+  to skip stages that haven't changed, making the whole process reproducible
+  and automatic.
+
+
+════════════════════════════════════════════════════════════════════════════════
+SECTION 3 — DATA FORMAT: PARQUET FILES
+════════════════════════════════════════════════════════════════════════════════
+
+ELABORATED:
+  WHAT IT IS:
+  Parquet is a file format for storing tabular data (like a spreadsheet), but
+  designed for computers, not humans. It was created by Apache and is used by
+  companies like Facebook, Netflix, and Uber to store billions of rows
+  efficiently.
+
+  HOW IT IS USED:
+  After preprocessing, all datasets are saved as .parquet files:
+  - static_train.parquet — the 80% training set
+  - static_val.parquet — the 10% validation set
+  - static_test.parquet — the 10% test set
+  - static_all.parquet — all 649 students (used for seeding the database)
+  - weekly.parquet — all 5192 weekly behavioral records
+  These are loaded by training scripts using pandas: `pd.read_parquet(path)`.
+
+  WHY PARQUET AND NOT CSV:
+  — Parquet is 5–10x smaller than CSV because it uses compression.
+  — Parquet reads 10–100x faster because it stores data column-by-column
+    (columnar storage), so reading only certain columns skips the rest.
+  — Parquet preserves data types (integers, floats, strings stay correct).
+    CSV loses type information — everything becomes a string.
+  — The pandas library (used everywhere in this project) has native, fast
+    support for Parquet via pyarrow.
+
+SHORT SUMMARY:
+  Parquet is the file format used to store all processed datasets. It is
+  faster and smaller than CSV and preserves data types — the standard choice
+  for any serious data pipeline.
+
+
+════════════════════════════════════════════════════════════════════════════════
+SECTION 4 — MODEL 1: RIDGE REGRESSION (Grade Prediction)
+════════════════════════════════════════════════════════════════════════════════
+
+ELABORATED:
+  WHAT IT IS:
+  Ridge Regression is a mathematical model that finds a straight-line
+  relationship between input features and a numeric output. Think of it like
+  this: given a student's study time, parent education, past grades (G1, G2),
+  attendance, and 20+ other features, it learns a formula like:
+    predicted_G3 = (0.45 × G2) + (0.30 × G1) + (0.12 × study_time) + ...
+  The word "Ridge" means it adds a penalty to prevent any single feature
+  from having too much influence, making the model more stable.
+
+  WHAT PROBLEM IT SOLVES:
+  Predicting the final grade G3 (a number from 0 to 20). This is called a
+  "regression" problem because the output is a continuous number, not a category.
+
+  HOW IT IS TRAINED:
+  - Input: 33 preprocessed features per student
+  - Target: G3 (final grade, 0–20)
+  - Training data: 80% of 649 students = ~519 students
+  - Validation: 10% = ~65 students (for tuning the alpha hyperparameter)
+  - Test: 10% = ~65 students (for final honest evaluation)
+  - Algorithm: minimizes Mean Squared Error (MSE) between predicted and
+    actual G3 scores, with an L2 regularization penalty (alpha=1.0)
+  - Serialized (saved) using Joblib as ridge_regression.pkl
+
+  PERFORMANCE:
+  - MAE (Mean Absolute Error) ≈ 0.8: the model is off by less than 1 point
+    on a 20-point scale on average
+  - R² ≈ 0.85: the model explains 85% of the variance in final grades
+
+  WHY RIDGE AND NOT PLAIN LINEAR REGRESSION:
+  — Plain Linear Regression can overfit (memorize training data, fail on
+    new data) when features are correlated with each other.
+  — In student data, G1 and G2 are highly correlated. Ridge handles this
+    gracefully by shrinking coefficients.
+  — Ridge adds one hyperparameter (alpha) which controls the strength of
+    regularization. We tested alpha=1.0 as the stable default.
+
+  WHY NOT A NEURAL NETWORK FOR GRADE PREDICTION:
+  — With only 649 students, a neural network would overfit badly — it has
+    millions of parameters but only hundreds of examples.
+  — Ridge Regression is interpretable: you can see exactly which features
+    matter most (G2 gets the highest weight, as expected).
+  — Ridge trains in milliseconds; a neural network takes minutes.
+
+  WHY NOT DECISION TREE REGRESSOR:
+  — Decision trees for regression do not extrapolate well. They predict
+    the mean of training samples in each leaf, which can be inaccurate
+    for students near the boundary of grade categories.
+
+SHORT SUMMARY:
+  Ridge Regression predicts a student's final grade (0–20) from 33 features.
+  It achieves MAE ≈ 0.8, meaning predictions are within 1 grade point. Ridge
+  is chosen over plain linear regression for its stability with correlated
+  features, and over neural networks for its interpretability and performance
+  on small datasets.
+
+
+════════════════════════════════════════════════════════════════════════════════
+SECTION 5 — MODEL 2: MLP CLASSIFIER (Risk Classification)
+════════════════════════════════════════════════════════════════════════════════
+
+ELABORATED:
+  WHAT IT IS:
+  MLP stands for Multi-Layer Perceptron. This is the classic "deep learning"
+  model — a neural network with multiple layers of artificial neurons. Think
+  of it as a series of filters: each layer learns to recognize patterns in
+  the data, and the final layer produces a classification decision.
+
+  WHAT PROBLEM IT SOLVES:
+  Classifying each student into one of four risk categories:
+  - Low Risk: student is performing well, no immediate concern
+  - Medium Risk: some warning signs, keep an eye on them
+  - High Risk: significant concern, intervention recommended soon
+  - Critical Risk: urgent action needed immediately
+  These categories are derived from the G3 grade: Critical (<6), High (6–9),
+  Medium (10–13), Low (14–20).
+
+  ARCHITECTURE:
+  - Input Layer: 33 features (same as Ridge)
+  - Hidden Layer 1: 128 neurons, ReLU activation function
+  - Dropout: randomly turns off 30% of neurons during training (prevents
+    overfitting — same idea as not letting students copy each other's answers)
+  - Hidden Layer 2: 64 neurons, ReLU activation
+  - Dropout: 30%
+  - Hidden Layer 3: 32 neurons, ReLU activation
+  - Output Layer: 4 neurons with Softmax activation
+    (outputs a probability for each of the 4 risk classes)
+  - Loss function: Sparse Categorical Cross-Entropy
+  - Optimizer: Adam (adaptive learning rate — smarter than plain gradient descent)
+  - Training: 60 epochs maximum, with early stopping (stops when validation
+    loss stops improving for 10 consecutive epochs)
+
+  HOW IT IS TRAINED:
+  - Built with TensorFlow/Keras
+  - Input: preprocessed feature matrix
+  - Target: risk_class label (0=Low, 1=Medium, 2=High, 3=Critical)
+  - Uses 5-fold cross-validation to estimate generalization performance
+  - Saved as mlp.keras file
+
+  WHY MLP AND NOT LOGISTIC REGRESSION:
+  — Logistic Regression is a linear model. The boundary between risk classes
+    in student data is not perfectly linear (students with medium grades can
+    have high risk due to other factors).
+  — MLP learns non-linear decision boundaries through its hidden layers.
+
+  WHY NOT RANDOM FOREST OR GRADIENT BOOSTING:
+  — This project demonstrates deep learning as a required academic topic.
+  — However, Random Forest IS implemented as an alternative model in the
+    classification module for comparison.
+
+  WHY SOFTMAX AS OUTPUT:
+  — Softmax converts raw output numbers into probabilities that sum to 1.0.
+  — Example output: [0.05 Low, 0.15 Medium, 0.70 High, 0.10 Critical]
+  — The highest probability gives the predicted class (High), and 0.70 gives
+    the confidence score shown on the dashboard.
+
+SHORT SUMMARY:
+  The MLP Classifier is a 3-hidden-layer neural network that classifies each
+  student as Low / Medium / High / Critical risk. It learns non-linear patterns
+  in student behavior that simpler models miss, and outputs both a class label
+  and a confidence score.
+
+
+════════════════════════════════════════════════════════════════════════════════
+SECTION 6 — MODEL 3: 1D CONVOLUTIONAL NEURAL NETWORK (Temporal Pattern Detection)
+════════════════════════════════════════════════════════════════════════════════
+
+ELABORATED:
+  WHAT IT IS:
+  A Convolutional Neural Network (CNN) was originally invented for image
+  recognition. An image is a grid of pixels, and a CNN slides a small window
+  (called a "kernel" or "filter") across the image to detect patterns like
+  edges, shapes, and textures.
+
+  Here we use a 1D-CNN — the same idea but applied to a TIME SEQUENCE instead
+  of an image. Instead of sliding across an image, the CNN slides across a
+  sequence of 8 weekly records for each student.
+
+  WHAT PROBLEM IT SOLVES:
+  The MLP looks at a student's average features (e.g., average attendance
+  across all weeks). But it cannot see PATTERNS OVER TIME. Consider two
+  students who both have 75% average attendance:
+  - Student A: steady 75% every week (stable, low concern)
+  - Student B: 90% in weeks 1–4, dropping to 60%, 55%, 50%, 45% in weeks 5–8
+    (a DECLINING TREND — urgent concern!)
+  The MLP treats them identically. The CNN sees the temporal trend and
+  correctly identifies Student B as high risk because of the consistent
+  downward pattern.
+
+  INPUT SHAPE:
+  Each student's input is a matrix of shape (8 weeks × 5 features):
+  - weekly_attendance_pct
+  - weekly_quiz_score
+  - weekly_submission_rate
+  - weekly_lms_logins
+  - weekly_late_count
+  This is an 8×5 time-series matrix (like a tiny image with 8 rows and 5 columns).
+
+  ARCHITECTURE:
+  - Input: (8, 5) — 8 weeks of 5 features
+  - Conv1D layer 1: 32 filters, kernel_size=3, padding='same', ReLU
+    (detects short-term patterns: e.g., 3 consecutive weeks of decline)
+  - Conv1D layer 2: 64 filters, kernel_size=3, padding='same', ReLU
+    (detects longer, more complex patterns)
+  - GlobalMaxPooling1D: takes the most important feature detected across
+    all time windows
+  - Dense layer: 32 neurons, ReLU
+  - Dropout: 40%
+  - Output: 4 neurons, Softmax (same 4 risk classes as MLP)
+  - Saved as cnn1d.keras
+
+  HOW CONV1D WORKS (simple explanation):
+  The filter slides along the 8 weeks like this:
+  [Week1, Week2, Week3] → pattern detected → score
+  [Week2, Week3, Week4] → pattern detected → score
+  ...and so on. If the pattern "attendance drop in 3 consecutive weeks"
+  activates a filter strongly, the model learns that this pattern means
+  high risk.
+
+  WHY CNN AND NOT LSTM/RNN:
+  — LSTM (Long Short-Term Memory) is another model type for sequences.
+    But LSTMs are much harder to train, need more data, and take longer.
+  — With only 8 time steps and 649 students, CNN is faster, simpler,
+    and performs comparably.
+  — CNNs are more parallelizable (faster training) and more stable.
+
+  HOW CNN RISK IS USED IN ALERTS:
+  The streaming system tracks how many consecutive weeks the CNN predicts
+  "High Risk" for a student. If this count reaches 3 or more, a
+  "cnn_sustained_risk" CRITICAL alert fires — because a pattern of sustained
+  high risk confirmed by the CNN is the most reliable danger signal.
+
+SHORT SUMMARY:
+  The 1D-CNN slides a detection window across each student's 8-week behavioral
+  sequence to detect temporal patterns (declining trends, sudden drops) that
+  the MLP cannot see by looking at averages alone. It is the most sensitive
+  early-warning model in the system.
+
+
+════════════════════════════════════════════════════════════════════════════════
+SECTION 7 — MODEL 4: K-MEANS CLUSTERING (Student Segmentation)
+════════════════════════════════════════════════════════════════════════════════
+
+ELABORATED:
+  WHAT IT IS:
+  K-Means Clustering is an unsupervised machine learning algorithm — meaning
+  it learns WITHOUT being given correct answers. It looks at all student
+  feature vectors and groups similar students together. "K" is the number of
+  groups (we chose K=4).
+
+  Think of it like this: you have 649 students in a room. K-Means asks them
+  to stand in groups based on similarity, without anyone being told which
+  group to join. Students who are all struggling in the same way end up in
+  one corner; students who are all performing well end up in another.
+
+  THE 4 SEGMENTS:
+  - Segment 0 — "Consistent High Performers": high grades, high attendance,
+    low failures, engaged with the learning platform
+  - Segment 1 — "Improving Students": started poorly but showing positive
+    trends; responding to support
+  - Segment 2 — "Disengaged Students": poor platform engagement, low logins,
+    missing submissions — at risk due to disengagement not necessarily grades
+  - Segment 3 — "High-Risk Students": multiple risk factors converging:
+    low grades, poor attendance, low engagement
+
+  HOW IT WORKS:
+  1. Initialize 4 random "center points" (centroids) in the feature space
+  2. Assign each student to the nearest centroid
+  3. Move each centroid to the average of all students assigned to it
+  4. Repeat steps 2–3 until assignments stop changing
+  5. The result: 4 stable clusters
+  Saved as kmeans.pkl
+
+  HOW IT IS USED IN THE SYSTEM:
+  - Every student's segment is stored in the database
+  - The dashboard shows segment-level summaries
+  - Recommendation priority is adjusted based on segment: a "Disengaged"
+    student gets different intervention suggestions than a "High-Risk" student
+  - The segment label appears on the Student Profile page
+
+  WHY K=4 AND NOT MORE OR FEWER:
+  — K=2 (pass/fail) is too simplistic for meaningful advisor action.
+  — K=4 matches the 4 risk classes and is interpretable by advisors.
+  — Tested with K=2,3,4,5 using silhouette score; K=4 gave the best
+    within-cluster similarity without over-fragmenting.
+
+  WHY NOT DBSCAN OR HIERARCHICAL CLUSTERING:
+  — DBSCAN requires careful parameter tuning (epsilon, min_samples) and
+    produces variable numbers of clusters — unpredictable for production use.
+  — Hierarchical clustering creates a tree structure but requires choosing
+    a cut point. K-Means gives a fixed, interpretable number of groups.
+  — K-Means is computationally efficient and produces consistent results
+    with a fixed random seed.
+
+SHORT SUMMARY:
+  K-Means groups all 649 students into 4 behavioral segments without being
+  told what the groups should be. Advisors use these segments to understand
+  which students share similar challenges and need similar types of support.
+
+
+════════════════════════════════════════════════════════════════════════════════
+SECTION 8 — ADDITIONAL MODELS (implemented for academic completeness)
+════════════════════════════════════════════════════════════════════════════════
+
+ELABORATED:
+  The project implements EVERY model type required by the course curriculum.
+  Here is a quick explanation of each:
+
+  LOGISTIC REGRESSION:
+  - A classification model that finds a linear decision boundary.
+  - Used as: risk class classifier alternative to MLP.
+  - Why: demonstrates the simplest probabilistic classifier; baseline for
+    comparison against the more sophisticated MLP.
+
+  K-NEAREST NEIGHBORS (KNN):
+  - KNN for classification: "look at the K most similar students and vote"
+  - KNN for regression: "look at the K most similar students and average
+    their grades"
+  - Used as: alternative classifier and regressor for model comparison.
+  - Why: non-parametric (makes no assumptions about data distribution).
+    Required course topic.
+
+  DECISION TREE:
+  - A model that learns a tree of if/then rules.
+  - Example: IF attendance < 60% AND quiz_score < 8 THEN High Risk
+  - Used as: interpretable classifier/regressor; visible via feature
+    importance plots.
+  - Why: most human-interpretable model; required course topic.
+
+  SINGLE LAYER PERCEPTRON (SLP):
+  - Neural network with zero hidden layers. Input → Output directly.
+  - Essentially a probabilistic linear classifier with SGD optimizer.
+  - Why: foundational deep learning concept; required course topic.
+    Shows how adding hidden layers (MLP) dramatically improves capability.
+
+  GAUSSIAN NAIVE BAYES:
+  - Probabilistic classifier that assumes all features are independent.
+  - Fast, simple, works surprisingly well on small datasets.
+  - Used as: fast baseline classifier.
+
+  FINE-TUNED ANN (3 configurations):
+  - The same MLP architecture tested with 3 different hyperparameter sets:
+    Config A: small network [32, 16 neurons], lr=0.001, dropout=0.2
+    Config B: medium network [64, 32, 16 neurons], lr=0.001, dropout=0.3
+    Config C: wide network [128, 64 neurons], lr=0.0005, dropout=0.4
+  - Why: demonstrates the effect of hyperparameter tuning; required topic.
+
+  5-FOLD CROSS-VALIDATION:
+  - Instead of training once, the dataset is split into 5 parts. The model
+    trains on 4 parts and tests on the remaining 1, rotating 5 times.
+  - Result: 5 performance scores that are averaged for a reliable estimate.
+  - Why: essential for small datasets (649 students) where a single
+    train/test split could be lucky or unlucky.
+
+SHORT SUMMARY:
+  Beyond the 4 production models, the project implements Linear Regression,
+  Logistic Regression, KNN, Decision Tree, Naive Bayes, SLP, and 3-config
+  ANN tuning — all compared on the same dataset with 5-fold cross-validation.
+
+
+════════════════════════════════════════════════════════════════════════════════
+SECTION 9 — THE PREPROCESSOR: Scikit-learn ColumnTransformer + Pipelines
+════════════════════════════════════════════════════════════════════════════════
+
+ELABORATED:
+  WHAT IT IS:
+  Scikit-learn (sklearn) is the most widely used Python library for classical
+  machine learning. It provides ready-made implementations of hundreds of
+  algorithms, along with tools for data preprocessing.
+
+  WHAT THE PREPROCESSOR DOES:
+  The Preprocessor class wraps scikit-learn's ColumnTransformer, which applies
+  different transformations to different columns simultaneously:
+
+  For NUMERIC columns (age, study time, absences, etc.):
+    Step 1 — SimpleImputer: fills any missing values with the MEDIAN value
+              of that column. Median is used (not mean) because student data
+              can have outliers (e.g., one student with 75 absences while
+              most have 2–5).
+    Step 2 — StandardScaler: scales each column to mean=0, std=1.
+              Why? Ridge Regression and neural networks are sensitive to
+              feature scale. If "absences" ranges 0–75 and "study_time"
+              ranges 1–4, the model would unfairly weight absences higher
+              just because of the larger numbers.
+
+  For CATEGORICAL columns (school, sex, address, family size, etc.):
+    Step 1 — SimpleImputer: fills missing values with the most frequent value.
+    Step 2 — OneHotEncoder: converts each category into binary columns.
+              Example: school ["GP", "MS"] becomes school_GP=[1,0] and
+              school_MS=[0,1]. handle_unknown='ignore' means new categories
+              seen at prediction time are silently ignored.
+
+  FIT-ONCE, TRANSFORM-MANY:
+  The Preprocessor is FITTED (learned) only on training data.
+  It is then SAVED to disk (preprocessor.pkl) and loaded for:
+  - Transforming validation and test data during evaluation
+  - Transforming live data during real-time inference
+  This is critical: if you refit the preprocessor on new data, the scaling
+  would change and the trained models would produce wrong predictions.
+
+  WHY SKLEARN PIPELINES:
+  — Pipelines prevent data leakage: the scaler learns from training data
+    only and applies to test data without "peeking."
+  — Pipelines are serializable: joblib.dump() saves the entire fitted
+    pipeline to disk; joblib.load() restores it exactly.
+  — Alternatives like pandas-based manual preprocessing are error-prone:
+    easy to accidentally refit on test data or forget a step.
+
+SHORT SUMMARY:
+  The Preprocessor is a scikit-learn Pipeline that encodes categoricals and
+  scales numerics. It is fitted once on training data and saved to disk, then
+  loaded and applied identically to all future data — guaranteeing consistent
+  transformations between training and live inference.
+
+
+════════════════════════════════════════════════════════════════════════════════
+SECTION 10 — SERIALIZATION: Joblib and Keras/H5
+════════════════════════════════════════════════════════════════════════════════
+
+ELABORATED:
+  WHAT SERIALIZATION MEANS:
+  When a model finishes training, it exists only in RAM (computer memory). When
+  the program exits, RAM is cleared and the model is lost. Serialization is the
+  process of converting the model into a file on disk so it can be loaded later
+  without retraining.
+
+  JOBLIB (.pkl files):
+  - Used for: Ridge Regression, Logistic Regression, KNN, Decision Tree,
+    K-Means, and the Preprocessor
+  - Joblib is a Python library that efficiently serializes NumPy arrays and
+    scikit-learn objects
+  - Why Joblib over Python's built-in pickle: Joblib handles large NumPy
+    arrays much more efficiently (memory-mapped I/O, compression options)
+  - Usage: `joblib.dump(model, path)` to save; `joblib.load(path)` to load
+
+  KERAS / .keras files:
+  - Used for: MLP, SLP, fine-tuned ANN configs, and the 1D-CNN
+  - TensorFlow/Keras provides its own serialization format that saves the
+    model architecture (layers, connections) AND weights (learned parameters)
+    in one file
+  - The newer .keras format (replacing the older .h5 format) includes
+    optimizer state, making training resumable
+  - Usage: `model.save(path)` to save; `tf.keras.models.load_model(path)` to load
+
+SHORT SUMMARY:
+  Trained classical models are saved as .pkl via Joblib; deep learning models
+  are saved as .keras via TensorFlow's native format. Both are loaded at API
+  server startup and kept in memory for fast inference.
+
+
+════════════════════════════════════════════════════════════════════════════════
+SECTION 11 — THE DATABASE: SQLite + SQLAlchemy ORM
+════════════════════════════════════════════════════════════════════════════════
+
+ELABORATED:
+  WHAT IS A DATABASE:
+  A database is an organized, persistent store of data that can be queried
+  efficiently. Unlike a file (which you read all at once), a database lets
+  you ask specific questions: "Give me all students with risk class = High"
+  and get the answer instantly, even from millions of rows.
+
+  SQLITE:
+  SQLite is a database that stores everything in a SINGLE FILE (sentinel.db).
+  Unlike databases like PostgreSQL or MySQL that require a running server,
+  SQLite is serverless — it is an ordinary file that any program can open
+  directly. It is the most widely deployed database in the world (every
+  smartphone, every browser uses it internally).
+
+  5 TABLES IN THE DATABASE:
+
+  students table:
+  - One row per student (500 students from the UCI dataset with synthetic IDs)
+  - Columns: id, age, sex, school, program, segment (cluster label),
+    current_risk_class (Low/Medium/High/Critical), current_predicted_g3,
+    static_features (JSON blob with all original features), enrollment_date
+
+  weekly_records table:
+  - One row per student per week (500 students × 8 weeks = 4000 rows initially,
+    grows as streaming adds new weeks)
+  - Columns: student_id, week, attendance_pct, quiz_score, submission_rate,
+    lms_logins, late_count, created_at
+
+  alerts table:
+  - One row per triggered alert
+  - Columns: student_id, rule_id, severity, description, evidence (JSON),
+    acknowledged (True/False), triggered_at
+
+  recommendations table:
+  - One row per recommended advisor action
+  - Columns: student_id, alert_id, action, rationale, priority, status, created_at
+
+  advisor_actions table:
+  - Logs what the advisor actually did (records human responses)
+  - Columns: student_id, recommendation_id, advisor_name, action_taken, notes, created_at
+
+  SQLALCHEMY ORM:
+  Instead of writing raw SQL like:
+    `SELECT * FROM students WHERE current_risk_class = 'High'`
+  SQLAlchemy lets us write Python:
+    `session.query(Student).filter(Student.current_risk_class == 'High').all()`
+  This is called an ORM (Object-Relational Mapper). It maps database rows to
+  Python objects. Each row becomes a Python object; columns become attributes.
+  Benefits:
+  — Database-agnostic: swap SQLite for PostgreSQL just by changing one URL string
+  — Prevents SQL injection attacks (parameters are always escaped)
+  — Python-native: no context-switching between SQL and Python
+
+  WHY SQLITE AND NOT POSTGRESQL:
+  — This is a development/demo project. SQLite requires zero setup.
+  — PostgreSQL requires installing and running a separate server process.
+  — SQLite handles hundreds of requests/second easily — more than enough here.
+  — If deployed to production, swapping to PostgreSQL is one line change in
+    settings.yaml: `url: postgresql://user:password@host/db`
+
+  DATABASE SEEDING (src/db/seed.py):
+  After training completes, the seed script:
+  1. Loads all 649 students from static_all.parquet
+  2. Runs them through the Preprocessor
+  3. Gets G3 predictions from Ridge Regression
+  4. Gets risk class from MLP Classifier
+  5. Gets segment labels from K-Means
+  6. Inserts all students, weekly records, and initial predictions into the DB
+  This is the step that makes the database come alive with real data.
+
+SHORT SUMMARY:
+  The SQLite database stores all students, weekly records, alerts,
+  recommendations, and advisor actions in a single file. SQLAlchemy provides
+  a Python-native ORM layer so we never write raw SQL. The database is populated
+  by a seed script that runs all students through the trained models.
+
+
+════════════════════════════════════════════════════════════════════════════════
+SECTION 12 — THE STREAMING SYSTEM: Python threading + Queue + JSONL
+════════════════════════════════════════════════════════════════════════════════
+
+ELABORATED:
+  WHAT "STREAMING" MEANS:
+  In a real school, student data arrives continuously: a student logs into
+  the LMS at 3pm, submits an assignment at 4pm, gets a quiz score at 5pm.
+  This continuous flow of events is called a "data stream."
+
+  SentinelEDU simulates this streaming with a synthetic events file. Here
+  is how the streaming system works:
+
+  THE EVENTS FILE (events.jsonl):
+  - A file with one JSON object per line (JSONL format)
+  - Each line is a weekly behavioral event for one student:
+    {"student_id": "S0042", "week": 9, "weekly_attendance_pct": 65.2,
+     "weekly_quiz_score": 7.1, "weekly_lms_logins": 3, ...}
+  - Generated during the preprocessing stage from the UCI dataset with
+    added synthetic noise to simulate variation
+
+  THE PRODUCER (StreamProducer class):
+  - Runs as a BACKGROUND THREAD (Python threading.Thread)
+  - Reads events.jsonl line by line
+  - Puts each event into a Queue (a thread-safe buffer, like a pipe)
+  - Rate: configurable, default 2 events per second
+  - If it reaches the end of the file, it loops back to the beginning
+    (infinite loop of student activity simulation)
+  - The advisor can start/stop this via the Dashboard's "Start Stream" button
+  - Controlled by the /streaming/start and /streaming/stop API endpoints
+
+  THE CONSUMER (in the API):
+  - Also runs as a background thread
+  - Pulls events from the Queue
+  - Updates the Feature Store with the new data
+  - Runs the student's features through the inference models
+  - If prediction changes (e.g., from Medium to High risk), updates the DB
+  - Passes new features through the Alert Rules Engine
+
+  THE FEATURE STORE:
+  - A Python dictionary held in RAM: {student_id: latest_feature_vector}
+  - Pre-populated at server startup from the database (500 students)
+  - Updated in real time as streaming events arrive
+  - Why in RAM: database queries take milliseconds; dictionary lookups take
+    microseconds. For real-time inference, RAM is essential.
+
+  WHY PYTHON THREADING AND NOT KAFKA/REDIS:
+  — Apache Kafka is the industry standard for real-world data streaming.
+    It handles millions of events per second with persistence and replay.
+  — Redis Streams is a lighter alternative with similar properties.
+  — For this project, Kafka/Redis would require installing and running
+    additional server processes — enormous setup overhead for a demo.
+  — Python threading.Queue is a thread-safe in-process queue. It is
+    perfectly sufficient for simulating streaming at 2–10 events/second.
+  — The architecture is intentionally designed to be swappable: replacing
+    Queue with a Kafka consumer is a few lines of code change.
+
+  WHAT IS A DAEMON THREAD:
+  The producer thread is a "daemon" thread (daemon=True). This means it
+  automatically dies when the main program exits, without needing to be
+  explicitly stopped. This prevents the application from hanging on shutdown.
+
+SHORT SUMMARY:
+  The streaming system reads weekly student events from a JSONL file and
+  delivers them at a configurable rate (2/sec) into a Python Queue. A
+  consumer thread picks them up, updates the in-memory Feature Store, re-runs
+  predictions, and triggers the alert engine — simulating real-time monitoring.
+
+
+════════════════════════════════════════════════════════════════════════════════
+SECTION 13 — THE ALERT ENGINE: Rule-Based YAML Configuration
+════════════════════════════════════════════════════════════════════════════════
+
+ELABORATED:
+  WHAT IT IS:
+  The Alert Engine evaluates rules against each student's current feature
+  values and "fires" an alert when a rule's conditions are met. Rules are
+  defined in thresholds.yaml — a human-readable configuration file, not code.
+  This means an administrator can change alert thresholds without touching
+  any Python code.
+
+  THE 6 ALERT RULES:
+
+  Rule 1 — attendance_drop:
+  - Condition: weekly_attendance_pct < 70%
+  - Severity: medium
+  - Logic: if a student attended less than 70% of classes this week, flag it.
+  - Cooldown: 24 hours (so the same alert does not fire every single hour)
+
+  Rule 2 — quiz_decline:
+  - Condition: quiz_score_slope_3 < -1.0 (slope over last 3 weeks)
+  - Severity: medium
+  - Logic: if quiz scores are dropping at a rate faster than -1 point per
+    week over 3 weeks, flag it. This catches TRENDS, not just low scores.
+
+  Rule 3 — late_submissions:
+  - Condition: weekly_late_count >= 2
+  - Severity: low
+  - Logic: 2 or more late submissions in one week indicates time management
+    issues, which can quickly cascade into academic failure.
+
+  Rule 4 — predicted_final_low:
+  - Condition: regression_prediction < 10 (Ridge model predicts G3 < 10)
+  - Severity: high
+  - Logic: if the regression model itself predicts the student will fail the
+    final exam, this is a high-priority intervention signal.
+
+  Rule 5 — classifier_high_risk:
+  - Condition type: COMPOUND (two conditions must BOTH be true)
+  - Condition A: classifier_label == "High"
+  - Condition B: classifier_confidence > 0.75
+  - Severity: high
+  - Logic: the MLP classifier says High Risk AND is more than 75% confident.
+    Combining label AND confidence reduces false positives.
+
+  Rule 6 — cnn_sustained_risk:
+  - Condition: cnn_high_risk_consecutive >= 3
+  - Severity: CRITICAL
+  - Logic: the CNN has classified this student as High Risk for 3 or more
+    consecutive weeks. This is the strongest signal in the system — a
+    temporal pattern confirmed repeatedly.
+
+  THREE CONDITION TYPES:
+  - "threshold": single feature compared to a value (>, <, >=, <=, ==, !=)
+  - "slope": same as threshold but applied to a computed slope feature
+  - "compound": ALL sub-conditions must be true simultaneously (AND logic)
+
+  COOLDOWN MECHANISM:
+  Each rule has a cooldown_hours value. Once an alert fires for a student,
+  that same rule will not fire again for that student until the cooldown
+  expires. This prevents alert fatigue (advisors getting the same email 50
+  times in one day).
+
+  WHY YAML RULES AND NOT HARDCODED PYTHON:
+  — Non-technical staff (administrators, principals) can modify thresholds
+    without needing a programmer.
+  — Rules can be changed and reloaded without redeploying the application.
+  — The YAML format is human-readable and can be reviewed in a text editor.
+  — Alternative: a database-stored rule engine (like Drools). Too heavy for
+    this project scale.
+
+SHORT SUMMARY:
+  6 alert rules are defined in YAML and evaluated against each student's
+  real-time features as streaming events arrive. Rules use threshold, slope,
+  and compound condition types. A cooldown mechanism prevents alert fatigue.
+  CRITICAL alerts are fired by the CNN detecting 3+ consecutive high-risk weeks.
+
+
+════════════════════════════════════════════════════════════════════════════════
+SECTION 14 — THE RECOMMENDATION ENGINE: Priority-Ranked Advisor Actions
+════════════════════════════════════════════════════════════════════════════════
+
+ELABORATED:
+  WHAT IT IS:
+  When an alert fires, the Recommendation Engine automatically generates
+  specific actions for the advisor to take. These are not generic suggestions —
+  they are mapped directly from the rule that fired, with priority scores.
+
+  EXAMPLE FLOW:
+  Alert fires: cnn_sustained_risk (CRITICAL severity)
+  Recommendations generated:
+  1. "advisor_meeting" — priority 0.95 × 1.00 (critical multiplier) = 0.95
+     Rationale: "Sustained decline pattern detected by CNN"
+  2. "counseling_referral" — priority 0.80 × 1.00 = 0.80
+     Rationale: "Prolonged risk warrants non-academic support check-in"
+  3. "academic_probation_review" — priority 0.75 × 1.00 = 0.75
+     Rationale: "Formal institutional review recommended"
+
+  SEVERITY MULTIPLIERS:
+  - critical: × 1.00 (full priority)
+  - high: × 0.85
+  - medium: × 0.60
+  - low: × 0.30
+  This means a medium-severity alert generates lower-priority recommendations
+  than a high-severity alert, even if the base priority is the same.
+
+  INTERVENTION FATIGUE PREVENTION:
+  The engine checks: "Has this exact action been recommended to this student
+  in the last 14 days?" If yes, it skips generating that recommendation again.
+  This prevents an advisor from seeing "Schedule advisor meeting" every single
+  day for the same student.
+
+  THE 6 POSSIBLE ACTIONS:
+  - attendance_intervention: reach out about attendance
+  - tutoring_referral: connect with tutoring services
+  - study_plan_generation: create a structured study plan
+  - advisor_meeting: schedule a formal meeting
+  - counseling_referral: non-academic mental health/support referral
+  - academic_probation_review: formal institutional review process
+
+  WHY RULE-BASED AND NOT ML-BASED RECOMMENDATIONS:
+  — An ML-based recommendation system would need data on what interventions
+    ACTUALLY WORKED (outcome data), which we do not have.
+  — Rule-based systems are explainable: the advisor can see exactly why each
+    action was suggested.
+  — Alternative (future work): train a reinforcement learning model on
+    intervention outcomes over time.
+
+SHORT SUMMARY:
+  When an alert fires, the Recommendation Engine immediately generates a
+  prioritized list of specific actions for the advisor, weighted by alert
+  severity and filtered by a 14-day intervention fatigue check.
+
+
+════════════════════════════════════════════════════════════════════════════════
+SECTION 15 — THE API: FastAPI + REST Protocol + JSON + HTTP
+════════════════════════════════════════════════════════════════════════════════
+
+ELABORATED:
+  WHAT IS AN API:
+  API stands for Application Programming Interface. It is a set of URLs
+  (called "endpoints") that programs can call to get data or trigger actions.
+  Think of it like a restaurant menu: you (the dashboard) order something
+  from the menu (the API), the kitchen (the backend) prepares it, and the
+  waiter delivers it back to you.
+
+  WHAT IS REST:
+  REST (Representational State Transfer) is the most widely used protocol
+  (set of rules) for building web APIs. In REST:
+  - Each URL represents a RESOURCE (e.g., /students/S0042 = student S0042)
+  - HTTP methods define the operation:
+    GET = read data
+    POST = create data or trigger an action
+    PUT/PATCH = update data
+    DELETE = remove data
+  - Data is exchanged in JSON format
+
+  WHAT IS JSON:
+  JSON (JavaScript Object Notation) is a human-readable data format used
+  to send data between the API and the dashboard. Example:
+    {"student_id": "S0042", "risk_class": "High", "predicted_g3": 7.3}
+  Every modern programming language can parse JSON.
+
+  FASTAPI:
+  FastAPI is a modern Python web framework for building APIs. It is built
+  on top of Starlette (async HTTP server) and Pydantic (data validation).
+
+  THE API RUNS ON PORT 8001 and has these endpoints:
+
+  /students (GET): list all students with optional risk_class filter
+  /students/{id} (GET): get one student's full record
+  /students/{id}/profile (GET): rich profile with weekly records and alerts
+  /students/{id}/weekly (GET): all weekly records for one student
+  /students/{id}/alerts (GET): all alerts for one student
+  /students/{id}/recommendations (GET): pending recommendations
+  /students/{id}/advisor-action (POST): log what the advisor did
+
+  /alerts/recent (GET): most recent N alerts across all students
+  /alerts/{id}/acknowledge (POST): mark an alert as acknowledged
+
+  /streaming/start (POST): start the streaming producer thread
+  /streaming/stop (POST): stop the streaming producer thread
+  /streaming/status (GET): check if streaming is running
+
+  /predictions (GET): live predictions for a student
+  /segments (GET): summary of all 4 segments
+
+  /models/metrics (GET): all model performance metrics
+  /models/registry (GET): which models are in production
+  /models/comparison (GET): Markdown model comparison report
+  /models/figures (GET): list of available chart image files
+
+  /rag/query (POST): ask the AI Advisor a question
+  /rag/recommend/{student_id} (GET): generate AI recommendations for a student
+
+  /health (GET): server health check — returns {"status": "ok"}
+
+  PYDANTIC MODELS:
+  FastAPI uses Pydantic models to validate request and response data.
+  If the dashboard sends a POST /rag/query with body {"question": 123}
+  (a number instead of a string), FastAPI automatically returns a 422 error
+  before the code even runs. This prevents bugs from bad input.
+
+  CORS MIDDLEWARE:
+  CORS (Cross-Origin Resource Sharing) is a browser security feature.
+  By default, a web page from localhost:8501 (Streamlit) is not allowed to
+  call APIs at localhost:8001 (FastAPI) — they are different "origins."
+  FastAPI's CORSMiddleware is configured with allow_origins=["*"] to permit
+  all origins, which is appropriate for a local development tool.
+
+  UVICORN:
+  Uvicorn is the ASGI (Asynchronous Server Gateway Interface) web server
+  that actually runs FastAPI. It handles HTTP connections, manages threads,
+  and passes requests to FastAPI's router.
+  Command: `python -m uvicorn src.api.main:app --host 0.0.0.0 --port 8001 --reload`
+  The --reload flag makes uvicorn watch for file changes and automatically
+  restart — useful during development.
+
+  WHY FASTAPI AND NOT FLASK OR DJANGO:
+  — Flask is simpler but lacks automatic request validation, OpenAPI docs
+    generation, and async support.
+  — Django REST Framework is powerful but heavyweight — brings an ORM,
+    admin panel, authentication framework, and much more that we do not need.
+  — FastAPI automatically generates interactive API documentation at
+    /docs (Swagger UI) and /redoc. You can test every endpoint in the browser.
+  — FastAPI is the fastest Python web framework (benchmarks: faster than
+    Flask, comparable to Node.js Express).
+  — Native async/await support means it can handle many concurrent requests
+    without blocking.
+
+SHORT SUMMARY:
+  FastAPI runs on port 8001 and exposes 20+ REST endpoints over HTTP/JSON.
+  The dashboard calls these endpoints to get student data, trigger streaming,
+  and query the AI. FastAPI was chosen for its speed, automatic validation,
+  and auto-generated documentation. Uvicorn is the underlying HTTP server.
+
+
+════════════════════════════════════════════════════════════════════════════════
+SECTION 16 — THE RAG SYSTEM: Retrieval-Augmented Generation
+════════════════════════════════════════════════════════════════════════════════
+
+ELABORATED:
+  WHAT IS RAG:
+  RAG stands for Retrieval-Augmented Generation. It is a technique that
+  combines two things:
+  1. RETRIEVAL: searching a knowledge base to find relevant documents
+  2. GENERATION: using an AI language model to write a response based on
+     those retrieved documents
+  The result: an AI assistant that gives accurate, grounded answers instead
+  of hallucinating (making things up).
+
+  WHY RAG AND NOT JUST A CHATBOT:
+  A plain chatbot (like asking GPT-4 "how do I help a High Risk student?")
+  gives generic advice from its training data. It does not know:
+  - What SentinelEDU's specific intervention protocols are
+  - What this specific student's actual data looks like
+  - The CNN model's specific risk patterns
+  RAG fixes this by giving the AI the EXACT documents and student data it
+  needs before asking it to respond.
+
+  THE KNOWLEDGE BASE (15 documents, 8 categories):
+  These are expert-written intervention documents embedded into the system:
+  - attendance: how to handle attendance problems
+  - academic_performance: responding to grade decline
+  - engagement: handling low LMS engagement
+  - high_risk: specific interventions for High/Critical students
+  - mental_health: recognizing and referring mental health concerns
+  - tutoring: making effective tutoring referrals
+  - advisor_practices: best practices for advisor meetings
+  - model_explanation: explaining what the CNN and MLP models detect
+
+  THE SEARCH ENGINE: FAISS (Facebook AI Similarity Search)
+  FAISS is a library built by Facebook AI Research for ultra-fast similarity
+  search over vectors. Here is how it works:
+
+  Step 1 — EMBEDDING: each document is converted into a vector (a list of
+  384 numbers) using the sentence-transformers model all-MiniLM-L6-v2.
+  A vector is like a coordinate in 384-dimensional space. Documents that
+  are semantically similar (have similar meaning) end up close together
+  in this space.
+
+  Step 2 — INDEXING: FAISS builds an IndexFlatL2 index — a structure that
+  can find the nearest vectors to any query vector using L2 (Euclidean)
+  distance. "Flat" means it does exact (not approximate) search — checks
+  all 15 documents. For 15 documents this is instantaneous; for millions
+  of documents FAISS would use approximate methods (IVF, HNSW).
+
+  Step 3 — QUERYING: when an advisor asks "what should I do for a student
+  with 60% attendance?", that question is also embedded into a 384-dim
+  vector, and FAISS finds the 3 nearest document vectors — the 3 most
+  relevant knowledge base articles.
+
+  Step 4 — PERSISTENCE: after the index is built on first startup, it is
+  saved to disk (faiss.index + docs.json) so subsequent startups load it
+  in milliseconds rather than recomputing.
+
+  WHY FAISS AND NOT OTHER VECTOR DATABASES:
+  — Pinecone, Weaviate, Qdrant, ChromaDB are all vector databases that
+    offer similar semantic search. But they require running an external
+    service or API.
+  — FAISS is a local library — no server, no API key, no network call.
+    It runs entirely in Python process memory.
+  — For 15 documents, FAISS IndexFlatL2 is overkill (a simple NumPy cosine
+    similarity would work). But FAISS scales to millions of documents if
+    the knowledge base grows, and is the industry standard.
+  — A NumPy fallback IS implemented: if FAISS is not available, the system
+    uses cosine similarity with NumPy arrays.
+
+  THE EMBEDDER: sentence-transformers / all-MiniLM-L6-v2
+  Sentence-transformers is a Python library that wraps pre-trained language
+  models optimized for producing sentence embeddings (vector representations
+  of text meaning). The specific model used is "all-MiniLM-L6-v2":
+  - "MiniLM" = a compressed (small) version of BERT
+  - "L6" = 6 transformer layers (smaller = faster)
+  - Output dimension: 384 (each text becomes a 384-number vector)
+  - Why this model: fast, small, runs on CPU without a GPU, and produces
+    high-quality semantic embeddings for sentences up to 256 tokens.
+  - Downloaded once on first use and cached locally.
+  - TF-Keras shim (tf-keras package) needed because sentence-transformers
+    uses TensorFlow 2.17 with Keras 3, but was built for Keras 2. The shim
+    bridges the compatibility gap.
+
+  WHY NOT OpenAI Embeddings:
+  — OpenAI's text-embedding-ada-002 is excellent but requires an API call
+    for EVERY document and query — latency + cost.
+  — Sentence-transformers runs locally with no API calls.
+
+  THE GENERATOR: Anthropic Claude claude-haiku-4-5-20251001
+  Claude is Anthropic's family of language models. "claude-haiku-4-5" is
+  the fastest and most cost-efficient Claude model:
+  - Fast response time (< 2 seconds typically)
+  - High quality reasoning for advisor-level questions
+  - 200,000 token context window
+  - Max tokens per response: 1024
+
+  HOW GENERATION WORKS:
+  The generator builds a prompt containing three parts:
+  1. SYSTEM PROMPT: defines the AI's persona as "SentinelEDU's AI Academic
+     Advisor Assistant" with rules (cite data, be specific, no diagnoses,
+     end with recommended actions)
+  2. RETRIEVED CONTEXT: the 3 most relevant knowledge base documents from FAISS
+  3. STUDENT DATA: the actual student's current risk class, attendance,
+     quiz scores, active alerts (if a student ID was provided)
+  4. USER QUESTION: what the advisor actually asked
+
+  Then it calls the Anthropic API via HTTPS (the anthropic Python SDK):
+  `client.messages.create(model="claude-haiku-4-5-20251001", max_tokens=1024, ...)`
+
+  TEMPLATE FALLBACK:
+  If ANTHROPIC_API_KEY is not set, the system falls back to a structured
+  template response that still shows the retrieved documents and student data
+  with recommended next actions — functional, just not AI-generated prose.
+
+  THE API KEY AND DOTENV:
+  The Anthropic API key is stored in a .env file:
+    ANTHROPIC_API_KEY=sk-ant-api03-...
+  The python-dotenv library reads this file at server startup and sets it
+  as an environment variable. The .env file is listed in .gitignore so it
+  is never committed to GitHub (keeps the key private).
+
+  WHY CLAUDE AND NOT OPENAI GPT:
+  — Anthropic is the company that built Claude Code (the tool used to develop
+    this project). Using Anthropic's own API is a natural choice.
+  — Claude claude-haiku-4-5 is competitively priced and fast.
+  — Claude is known for following instructions carefully — important for
+    the advisor persona and the "no diagnosis" safety rule.
+
+  WHY NOT A LOCALLY-RUN LLM (Llama, Mistral):
+  — Running Llama-3 locally requires 8–40 GB of VRAM (a powerful GPU).
+    A student laptop or standard server cannot run it.
+  — Quantized versions (4-bit) could run on CPU but would be too slow
+    for interactive advisor chat.
+
+SHORT SUMMARY:
+  RAG combines FAISS (local vector search over 15 expert documents) with
+  Claude claude-haiku-4-5 (Anthropic's fast LLM) to give advisors specific,
+  grounded answers. sentence-transformers converts text to 384-dim vectors;
+  FAISS finds the 3 most relevant documents in microseconds; Claude generates
+  a personalized response using those documents + the student's live data.
+
+
+════════════════════════════════════════════════════════════════════════════════
+SECTION 17 — THE DASHBOARD: Streamlit
+════════════════════════════════════════════════════════════════════════════════
+
+ELABORATED:
+  WHAT IT IS:
+  Streamlit is a Python library that turns Python scripts into interactive
+  web applications — no HTML, CSS, or JavaScript required. You write Python
+  and Streamlit renders it as a web page that anyone can open in a browser.
+
+  THE 6 DASHBOARD PAGES:
+
+  Page 1 — Home (🏠):
+  - KPI cards: total students, % at risk, unacknowledged alerts, streaming status
+  - Risk distribution bar chart (how many Low / Medium / High / Critical)
+  - Live alert ticker showing the most recent alerts
+  - "Start Stream" / "Stop Stream" buttons (calls /streaming/start and /stop)
+  - Auto-refreshes to show live data as streaming runs
+
+  Page 2 — Roster (👥):
+  - Full table of all 500 students with columns: ID, risk class, predicted G3,
+    segment, school, age, sex
+  - Filter by risk class (checkboxes: Low, Medium, High, Critical)
+  - Color-coded risk badges (green=Low, yellow=Medium, red=High, dark=Critical)
+  - Click any student to navigate to their profile
+
+  Page 3 — Student Profile (👤):
+  - Student overview card (risk class, predicted grade, segment)
+  - Weekly trend charts: attendance over 8 weeks, quiz scores, LMS logins,
+    late submissions — all as line/bar charts using Plotly
+  - Alert history: all alerts that have fired for this student
+  - Recommendation panel: pending advisor actions with priority scores
+  - Advisor Action Logger: a form where the advisor records what they did
+    (calls POST /students/{id}/advisor-action)
+
+  Page 4 — Alerts (🚨):
+  - Real-time alert feed sorted by severity and time
+  - Each alert shows: student ID, rule description, severity badge, timestamp
+  - "Acknowledge" button per alert (calls POST /alerts/{id}/acknowledge)
+  - Color-coded by severity: blue=low, yellow=medium, red=high, dark red=critical
+
+  Page 5 — Model Performance (📊):
+  - Metrics comparison table: accuracy, precision, recall, F1 for classifiers;
+    MAE, RMSE, R² for regression models
+  - Model registry: which models are in production
+  - Confusion matrices (images served from /models/figures)
+  - ROC curves
+  - Feature importance charts
+  - Model comparison Markdown report (narrative explanation of results)
+
+  Page 6 — AI Advisor (🤖):
+  - Student context loader: enter a student ID to load their profile
+    into the chat context
+  - Quick question bank: 8 pre-written questions the advisor can click
+    to ask instantly
+  - Chat interface: free-text conversation with Claude
+  - Sources expander: shows which knowledge base documents were retrieved
+  - Clear conversation button
+
+  API CLIENT (api_client.py):
+  All dashboard pages communicate with the FastAPI backend through a single
+  file called api_client.py. This file contains one Python function per API
+  endpoint. Example:
+    `def get_profile(student_id): return _get(f"/students/{student_id}/profile")`
+  All calls use the requests library (HTTP GET/POST to localhost:8001).
+  Timeouts: 15 seconds for fast endpoints, 45 seconds for heavy model-loading
+  endpoints (like /models/metrics which loads all model artifacts from disk).
+
+  WHY STREAMLIT AND NOT REACT/VUE/FLASK-TEMPLATES:
+  — A React dashboard would require writing JavaScript, CSS, and HTML —
+    a completely separate tech stack from the Python backend.
+  — Streamlit lets data scientists build dashboards entirely in Python.
+  — Streamlit's component library (st.chart, st.dataframe, st.chat_message)
+    covers everything needed without custom CSS.
+  — One Python file per page = self-contained, easy to understand.
+  — Alternative: Dash (by Plotly). Dash is also Python-only but requires
+    more code for interactivity. Streamlit's session_state and automatic
+    re-run model is simpler for chat applications.
+
+  CUSTOM CSS:
+  A custom CSS file (dashboard/theme/custom.css) overrides Streamlit's
+  default styling to add:
+  - Gradient page headers
+  - Styled metric cards
+  - Risk-class color chips (green/yellow/red)
+  - Section title styling
+  Injected using `st.markdown(f"<style>{css}</style>", unsafe_allow_html=True)`
+
+  PLOTLY FOR CHARTS:
+  All interactive charts use Plotly (Python library). Plotly produces
+  interactive HTML charts (hover to see values, zoom, pan) rather than
+  static images. Why Plotly over Matplotlib:
+  — Plotly charts are interactive in the browser (Matplotlib produces static PNGs)
+  — Plotly integrates natively with Streamlit (st.plotly_chart)
+  — Plotly has better default styling for dashboards
+
+SHORT SUMMARY:
+  Streamlit powers the entire front-end dashboard in pure Python across 6
+  pages. All data comes from the FastAPI backend via requests. Plotly provides
+  interactive charts. The AI Advisor page connects to the RAG system through
+  the API, allowing natural-language conversation about any student.
+
+
+════════════════════════════════════════════════════════════════════════════════
+SECTION 18 — PROTOCOLS AND COMMUNICATION STANDARDS USED
+════════════════════════════════════════════════════════════════════════════════
+
+ELABORATED:
+
+  HTTP/1.1 (HyperText Transfer Protocol):
+  The communication protocol between the Streamlit dashboard (port 8501) and
+  the FastAPI backend (port 8001). Every dashboard page makes HTTP GET or
+  POST requests using the `requests` Python library. HTTP is stateless —
+  each request is independent.
+
+  REST (Representational State Transfer):
+  The architectural style defining how the API URLs are structured.
+  Resources (students, alerts, predictions) are nouns; HTTP methods are verbs.
+  GET /students = list students; POST /alerts/5/acknowledge = update alert 5.
+
+  JSON (JavaScript Object Notation):
+  The data exchange format for all API communication. Requests and responses
+  are JSON strings. FastAPI automatically serializes Python dicts to JSON
+  and deserializes JSON to Pydantic models.
+
+  ASGI (Asynchronous Server Gateway Interface):
+  The interface standard between Uvicorn (the HTTP server) and FastAPI
+  (the application). ASGI is the async successor to WSGI (used by Flask/Django)
+  and enables handling thousands of concurrent connections efficiently.
+
+  HTTPS (for Anthropic API):
+  All calls to the Anthropic Claude API use HTTPS (HTTP + TLS encryption).
+  The anthropic Python SDK manages the connection; the API key is sent in
+  the Authorization header. TLS encrypts the request and response so the
+  API key cannot be intercepted.
+
+  JSONL (JSON Lines):
+  The format of the streaming events file (events.jsonl). Each line is a
+  valid JSON object, terminated by a newline. JSONL is ideal for streaming
+  because you can read one line at a time without parsing the entire file.
+
+  WebSocket (Streamlit internal):
+  Streamlit uses WebSocket connections between the browser and the Streamlit
+  server for real-time UI updates. When the advisor clicks a button, the
+  browser sends a WebSocket message; Streamlit re-runs the page script and
+  sends the updated HTML back. This is invisible to the developer — Streamlit
+  handles it automatically.
+
+  SQLite over file I/O:
+  The database protocol is not network-based — SQLite reads/writes a local
+  file (sentinel.db) using the SQLite C library directly linked into Python.
+  SQLAlchemy sends SQL commands to this library; no network involved.
+
+SHORT SUMMARY:
+  The system uses HTTP/REST/JSON between dashboard and API; HTTPS for
+  Anthropic calls; ASGI for Uvicorn→FastAPI; JSONL for streaming events;
+  WebSocket internally in Streamlit; and file-based I/O for SQLite.
+
+
+════════════════════════════════════════════════════════════════════════════════
+SECTION 19 — COMPLETE PROJECT FLOW FROM START TO END
+════════════════════════════════════════════════════════════════════════════════
+
+  Imagine you are watching the project run from the very beginning.
+  Here is exactly what happens, in order, in plain language:
+
+  ────────────────────────────────────────
+  PHASE 1: PIPELINE (run once, `dvc repro`)
+  ────────────────────────────────────────
+
+  [1] You open a terminal and type `dvc repro`.
+      DVC reads dvc.yaml and checks: which stages are outdated?
+      If this is the first run, all 5 stages are outdated.
+
+  [2] Stage 1 — load_data:
+      Python downloads the Portuguese Student dataset from UCI ML Repository
+      using `ucimlrepo.fetch_ucirepo(id=320)`. The data is saved as a CSV
+      file with 649 rows and 33 columns.
+
+  [3] Stage 2 — preprocess:
+      - The CSV is loaded into a pandas DataFrame.
+      - A risk_class label is computed from G3: G3<6=Critical, 6–9=High, etc.
+      - A ColumnTransformer (sklearn) fits:
+          - StandardScaler on numeric columns
+          - OneHotEncoder on categorical columns
+      - The fitted transformer is saved as preprocessor.pkl (Joblib).
+      - The 649 students are split: 80% train, 10% val, 10% test.
+      - 8 synthetic weekly behavioral records per student are generated with
+        random noise to simulate LMS data. Saved as weekly.parquet.
+      - All splits saved as Parquet files.
+
+  [4] Stage 3 — train_classical:
+      - Ridge Regression is fitted to (X_train, G3_train). Saved as .pkl.
+      - Logistic Regression, KNN, Decision Tree, Naive Bayes are fitted for
+        risk classification. Saved as .pkl files.
+      - KMeans (k=4) is fitted to the full preprocessed dataset.
+        Each of the 649 students gets a cluster label 0–3. Saved as .pkl.
+      - 5-fold cross-validation is run on each classical model. Results
+        saved to JSON metric files.
+
+  [5] Stage 4 — train_deep:
+      - TensorFlow/Keras builds the SLP, MLP, and 3 fine-tuned ANN configs.
+      - All are trained with Adam optimizer, early stopping, 60 max epochs.
+      - The 1D-CNN is built with Conv1D layers. Input is the (8×5) weekly
+        sequence matrix. Trained on sequence data.
+      - All models saved as .keras files.
+      - Training history (loss curves) saved for gradient descent visualization.
+
+  [6] Stage 5 — evaluate:
+      - All models are loaded from disk.
+      - Test set predictions are computed.
+      - For classifiers: accuracy, precision, recall, F1, confusion matrix, ROC.
+      - For regressors: MAE, RMSE, R² score.
+      - Plots saved as PNG files in artifacts/figures/.
+      - A Markdown model comparison report is written.
+      - config/model_registry.json is written: identifies which models are
+        "in production" (Ridge for regression, MLP for classification).
+
+  DVC pipeline is done. You now have trained models, evaluation results,
+  and processed data — all reproducible.
+
+  ────────────────────────────────────────
+  PHASE 2: DATABASE SEEDING (`python -m src.db.seed`)
+  ────────────────────────────────────────
+
+  [7] The seed script runs:
+      - SQLAlchemy connects to sentinel.db and creates all 5 tables if needed.
+      - Loads static_all.parquet (all 649 students).
+      - Loads the Preprocessor from preprocessor.pkl.
+      - Transforms all 649 students through the Preprocessor.
+      - Ridge Regression predicts G3 for each → current_predicted_g3.
+      - MLP Classifier predicts risk class → current_risk_class.
+      - KMeans assigns segment → segment name.
+      - 500 Student rows inserted into the students table
+        (synthetic IDs: S0001–S0500, limited to 500 for clean demo).
+      - 6000 WeeklyRecord rows inserted (500 students × 8 weeks × 1.5 augment).
+      - 1000 Prediction rows inserted (2 per student: regression + classification).
+      Output: "Seeded DB: students=500, weekly_records=6000, predictions=1000"
+
+  ────────────────────────────────────────
+  PHASE 3: SERVER STARTUP
+  ────────────────────────────────────────
+
+  [8] You run:
+      `python -m uvicorn src.api.main:app --host 0.0.0.0 --port 8001 --reload`
+
+  [9] python-dotenv reads .env file → ANTHROPIC_API_KEY is set as
+      environment variable → Claude API calls will be authenticated.
+
+  [10] FastAPI initializes all routers (students, alerts, recommendations,
+       streaming, predictions, segments, models, rag).
+       CORS middleware is added.
+
+  [11] The startup event runs:
+       a) init_db(): creates tables if they don't exist (safe to re-run).
+       b) ModelRegistry.load(): loads ALL trained models from disk into RAM:
+          - preprocessor.pkl → Preprocessor object
+          - ridge_regression.pkl → Ridge Regression model
+          - mlp.pkl → MLP Classifier model (or .keras if deep version)
+          - cnn1d.keras → 1D-CNN model via TensorFlow
+          - kmeans.pkl → KMeans model
+          This takes 15–30 seconds (TensorFlow is heavy).
+       c) FeatureStore.hydrate_from_db(): loads all 500 students' latest
+          features from the database into RAM (Python dictionary).
+       d) rag_retriever.build_index():
+          - Loads 15 knowledge base documents.
+          - Embeds all documents using sentence-transformers all-MiniLM-L6-v2.
+          - Builds FAISS IndexFlatL2.
+          - Saves index to disk (or loads from disk if already saved).
+
+  [12] Uvicorn starts listening on port 8001.
+       "Application startup complete." is logged.
+       The server is ready to handle requests.
+
+  ────────────────────────────────────────
+  PHASE 4: DASHBOARD
+  ────────────────────────────────────────
+
+  [13] In a second terminal:
+       `python -m streamlit run dashboard/app.py`
+       Streamlit starts on port 8501.
+       The advisor opens http://localhost:8501 in their browser.
+
+  [14] The Home page loads:
+       - api_client.py calls GET /students → gets student count per risk class
+       - Renders KPI cards (e.g., "47 High Risk students")
+       - Renders risk distribution bar chart using Plotly
+       - Renders "Start Stream" button
+
+  ────────────────────────────────────────
+  PHASE 5: STREAMING (real-time monitoring)
+  ────────────────────────────────────────
+
+  [15] Advisor clicks "Start Stream":
+       - Dashboard calls POST /streaming/start
+       - StreamProducer thread starts
+       - Begins reading events.jsonl at 2 events/second
+
+  [16] Every 0.5 seconds:
+       - Producer reads one line from events.jsonl
+       - Parses JSON: {student_id: "S0042", week: 9, attendance_pct: 62.1, ...}
+       - Puts event into Queue
+
+  [17] Consumer thread picks up the event:
+       - Updates Feature Store for S0042 with new attendance
+       - Runs S0042's features through Ridge Regression → updated G3 prediction
+       - Runs S0042's features through MLP → updated risk class
+       - Runs S0042's 8-week sequence through CNN → temporal risk assessment
+       - Updates S0042's record in the database
+
+  [18] Alert Rules Engine evaluates all 6 rules for S0042:
+       - attendance_drop: 62.1 < 70 → TRUE → fires!
+       - Checks cooldown: was this alert fired in the last 24 hours? No.
+       - Inserts Alert row: {student_id: "S0042", rule_id: "attendance_drop",
+         severity: "medium", triggered_at: now}
+       - RecommendationEngine maps attendance_drop → "attendance_intervention"
+         action with priority 0.70 × 0.60 (medium multiplier) = 0.42
+       - Inserts Recommendation row.
+
+  ────────────────────────────────────────
+  PHASE 6: ADVISOR RESPONSE
+  ────────────────────────────────────────
+
+  [19] The Alerts page refreshes and shows:
+       "Student S0042 — Attendance dropped significantly — MEDIUM"
+
+  [20] Advisor clicks on S0042 → Student Profile page:
+       - Calls GET /students/S0042/profile
+       - Shows weekly trend charts: attendance line drops from 88% to 62%
+       - Shows the active alert
+       - Shows recommendation: "attendance_intervention — priority 0.42"
+
+  [21] Advisor navigates to AI Advisor page:
+       - Types student ID: S0042, loads profile
+       - Asks: "What should I say in my first meeting with this student?"
+       - Dashboard calls POST /rag/query with {question: "...", student_id: "S0042"}
+       - FastAPI loads S0042's profile from DB
+       - rag_engine.query() runs:
+           a) sentence-transformers embeds the question → 384-dim vector
+           b) FAISS searches 15 documents → returns top 3 (attendance, high_risk,
+              advisor_practices)
+           c) Student context string built: "Risk: Medium, Attendance: 62%,..."
+           d) Anthropic API called with system prompt + 3 documents + student data
+           e) Claude generates a personalized response in ~1 second
+       - Dashboard shows the response with "Sources used" expander
+       - Sources: "Attendance Intervention Protocol", "High-Risk Student
+         Engagement", "Advisor Meeting Best Practices"
+
+  [22] Advisor schedules a meeting, then logs the action:
+       - Clicks "Log Action" on the Student Profile page
+       - Selects "advisor_meeting" from the dropdown
+       - Adds note: "Meeting scheduled for Thursday 2pm"
+       - Dashboard calls POST /students/S0042/advisor-action
+       - Database records the action in advisor_actions table
+
+  [23] The cycle continues: streaming runs, more events arrive, more alerts
+       fire, more recommendations are generated. The system watches all
+       500 students simultaneously, 24/7.
+
+  ────────────────────────────────────────────────────────────────────────────
+
+
+════════════════════════════════════════════════════════════════════════════════
+SECTION 20 — FULL TECHNOLOGY STACK SUMMARY TABLE
+════════════════════════════════════════════════════════════════════════════════
+
+  CATEGORY              TECHNOLOGY            VERSION       PURPOSE
+  ─────────────────────────────────────────────────────────────────────────────
+  Language              Python                3.11          Everything
+  Data Source           UCI ML Repository     —             Raw student dataset
+  Data Download         ucimlrepo             0.0.7         Programmatic download
+  Pipeline              DVC                   3.53.2        ML pipeline orchestration
+  Data Format           Parquet (pyarrow)     16.1.0        Fast columnar storage
+  Data Manipulation     pandas                2.2.2         DataFrame operations
+  Numeric Computing     numpy                 1.26.4        Array math
+  ML Library            scikit-learn          1.5.1         Classical models + preprocessing
+  Deep Learning         TensorFlow/Keras      2.17.0        MLP, SLP, ANN, CNN
+  Model Saving          Joblib                1.4.2         Classical model serialization
+  Embedding Model       sentence-transformers ≥3.0.0        Text → 384-dim vectors
+  Embedding Model       all-MiniLM-L6-v2      —             Specific model used
+  Vector Search         FAISS (faiss-cpu)     ≥1.7.4        Semantic document retrieval
+  LLM / AI              Anthropic Claude      claude-haiku  AI Advisor generation
+  API SDK               anthropic             ≥0.34.0       Python SDK for Claude
+  Web Framework         FastAPI               0.112.0       REST API server
+  HTTP Server           Uvicorn               0.30.5        ASGI server
+  Data Validation       Pydantic              2.8.2         Request/response schemas
+  HTTP Client           requests              2.32.3        Dashboard→API calls
+  Database              SQLite                (built-in)    Persistent storage
+  ORM                   SQLAlchemy            2.0.32        Python↔database mapping
+  Dashboard             Streamlit             1.37.1        Web UI
+  Charts                Plotly                5.22.0        Interactive visualizations
+  Config                PyYAML                6.0.2         YAML config parsing
+  Secrets               python-dotenv         1.0.1         .env file loading
+  Linting               Pylint + Flake8       —             Code quality
+  Version Control       Git + DVC             —             Code + data versioning
+  Protocol              HTTP/REST             1.1           Dashboard↔API
+  Protocol              HTTPS                 TLS 1.3       API→Anthropic
+  Protocol              JSON                  RFC 8259      Data exchange format
+  Protocol              JSONL                 —             Streaming events format
+  Protocol              ASGI                  3.0           Uvicorn↔FastAPI
+  Search Engine         FAISS IndexFlatL2     —             Exact L2 nearest-neighbor
+  Alert Config          YAML (thresholds)     —             Human-editable rules
+  ─────────────────────────────────────────────────────────────────────────────
+
+
+════════════════════════════════════════════════════════════════════════════════
+END OF DOCUMENT
+================================================================================
