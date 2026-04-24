@@ -1,0 +1,726 @@
+================================================================================
+           SENTINELEDU — 10-MINUTE DEMO SCRIPT + PROFESSOR Q&A
+           Team: Param Rasaniya | Sumanth Reddy | Viraj Mistry
+================================================================================
+
+TIMING BREAKDOWN
+────────────────
+  [0:00 – 1:00]   PART 1 — Team Introduction & Problem Statement   (Param)
+  [1:00 – 2:30]   PART 2 — System Architecture                     (Param)
+  [2:30 – 4:30]   PART 3 — ML Pipeline & Models                    (Sumanth)
+  [4:30 – 8:30]   PART 4 — Live Dry Run (Dashboard Demo)           (Viraj)
+  [8:30 – 10:00]  PART 5 — Wrap-Up & Key Achievements              (Sumanth)
+  [After demo]    PART 6 — Expected Professor Q&A                  (All)
+
+NOTE TO TEAM: Words in [brackets] are stage directions, not spoken.
+              Words in "quotes" are what you say out loud.
+              Switch the laptop smoothly — Viraj drives the demo.
+
+================================================================================
+PART 1 — INTRODUCTION & PROBLEM STATEMENT
+[Speaker: Param | Time: 0:00 – 1:00]
+================================================================================
+
+[Stand confidently, make eye contact with professor]
+
+"Good [morning/afternoon], Professor. We are Team Sentinel."
+
+"I am Param Rasaniya."
+"I am Sumanth Reddy."
+"I am Viraj Mistry."
+
+"Our project is called SentinelEDU — a real-time, end-to-end intelligent
+early-warning system for academic institutions."
+
+"Here is the problem we are solving."
+
+"Imagine you are an academic advisor responsible for 500 students. Right now,
+somewhere in that list, a student's quiz scores have been dropping for three
+consecutive weeks. Their attendance fell below 60% this week. They stopped
+logging into the learning platform. By the time this shows up as a failing
+grade, it is too late to help them."
+
+"The current solution is manual. Advisors check spreadsheets periodically,
+rely on gut instinct, and react after the damage is done."
+
+"SentinelEDU changes this. Our system watches all 500 students simultaneously,
+24 hours a day. It predicts who will fail before they fail, fires alerts the
+moment warning signs appear, and tells the advisor exactly what to do —
+all through a live dashboard. In the next 10 minutes, we will show you exactly
+how that works."
+
+================================================================================
+PART 2 — SYSTEM ARCHITECTURE
+[Speaker: Param | Time: 1:00 – 2:30]
+================================================================================
+
+[Point to a printed architecture diagram OR draw on whiteboard the 3 layers]
+
+"At a high level, SentinelEDU has three layers."
+
+"LAYER 1 — The Data and Training Layer."
+"We start with real student data from the UCI Machine Learning Repository —
+649 Portuguese high school students, 33 features each including grades,
+attendance, study habits, and family background."
+
+"We feed this data through a five-stage DVC pipeline — DVC stands for
+Data Version Control, it is the build system for our machine learning workflow.
+The five stages are: download, preprocess, train classical models, train deep
+learning models, and evaluate. Each stage is reproducible — anyone can
+re-run it from scratch and get identical results."
+
+"LAYER 2 — The Inference and Streaming Layer."
+"This is the heart of the system. At server startup, four trained models are
+loaded into memory: Ridge Regression for grade prediction, an MLP classifier
+for risk classification, a one-dimensional CNN for detecting temporal decline
+patterns, and K-Means for student segmentation."
+
+"A background thread called the Stream Producer reads simulated weekly
+student events at two events per second. A Consumer thread picks them up,
+runs them through all four models, checks all six alert rules, and updates
+the database in real time."
+
+"LAYER 3 — The API and Dashboard Layer."
+"A FastAPI backend running on port 8001 exposes over 20 REST endpoints.
+The Streamlit dashboard on port 8501 calls these endpoints and renders
+everything visually. On top of this, we have a RAG-powered AI Advisor —
+FAISS vector search over a curated knowledge base, combined with Anthropic
+Claude, to give advisors AI-generated, student-specific recommendations."
+
+"Let me now hand over to Sumanth to walk through the machine learning pipeline."
+
+================================================================================
+PART 3 — ML PIPELINE AND MODELS
+[Speaker: Sumanth | Time: 2:30 – 4:30]
+================================================================================
+
+"Thank you Param."
+
+"Let me explain the machine learning side of this project — this is where
+all the required course topics come in."
+
+"Our preprocessing pipeline uses scikit-learn's ColumnTransformer. Numeric
+features go through a SimpleImputer and StandardScaler. Categorical features
+go through a OneHotEncoder. Critically — the preprocessor is FITTED only on
+training data and saved to disk, then applied identically to validation, test,
+and live streaming data. This is the correct way to prevent data leakage."
+
+"We implemented FOUR production models:"
+
+"Number one — Ridge Regression, which predicts each student's final grade
+as a number between 0 and 20. Ridge adds an L2 regularization penalty to
+handle the high correlation between G1 and G2 grades. We achieve a Mean
+Absolute Error of approximately 0.8 on a 20-point scale."
+
+"Number two — a Multi-Layer Perceptron classifier with three hidden layers:
+128, 64, and 32 neurons. It uses ReLU activations, 30 percent dropout for
+regularization, and a Softmax output that classifies each student as
+Low, Medium, High, or Critical risk. Trained with the Adam optimizer,
+sparse categorical cross-entropy loss, and early stopping."
+
+"Number three — a one-dimensional Convolutional Neural Network. This is the
+most innovative model in our project. The MLP looks at feature averages, but
+it cannot see time. The CNN takes each student's eight weeks of behavioral
+data as a sequence — attendance, quiz scores, LMS logins, submission rate,
+and late count — and slides convolutional filters along those eight time steps
+to detect patterns like a three-week attendance decline. This is something
+the MLP literally cannot see. If the CNN classifies a student as High Risk
+for three or more consecutive weeks, a CRITICAL alert fires."
+
+"Number four — K-Means clustering with k equals four. This groups students
+into four behavioral segments without being given labels: Consistent High
+Performers, Improving Students, Disengaged Students, and High-Risk Students.
+These segments are stored in the database and inform the recommendation engine."
+
+"Beyond these four production models, we also implemented, as required by
+the course: Linear Regression, Logistic Regression, K-Nearest Neighbors,
+Decision Tree, Gaussian Naive Bayes, Single Layer Perceptron, and three
+fine-tuned ANN configurations. All classical models were evaluated with
+five-fold stratified cross-validation. All results are visible on the
+Model Performance dashboard page."
+
+"Viraj will now show you the live system."
+
+================================================================================
+PART 4 — LIVE DEMO (DRY RUN)
+[Speaker: Viraj | Time: 4:30 – 8:30]
+================================================================================
+
+[Viraj sits at laptop. Both terminals should already be running:
+ Terminal 1: uvicorn running on port 8001
+ Terminal 2: streamlit running on port 8501
+ Browser: open on http://localhost:8501]
+
+"Thank you Sumanth. I will now walk you through the live system."
+
+─── STEP 1: HOME PAGE (30 seconds) ───
+
+[Navigate to Home page — it should already be open]
+
+"This is the Home page. At the top you can see four KPI cards: total students
+monitored, the percentage classified as at-risk, unacknowledged alerts, and
+streaming status."
+
+"The bar chart shows the risk distribution across all 500 students — broken
+down by Low, Medium, High, and Critical. This gives the advisor an
+institution-wide view at a glance."
+
+─── STEP 2: START STREAMING (30 seconds) ───
+
+[Click "Start Stream" button]
+
+"I am now clicking Start Stream. This triggers a POST request to our
+/streaming/start API endpoint, which launches the StreamProducer background
+thread. It begins reading weekly behavioral events from our events file at
+two events per second and passing them to a Consumer thread that runs every
+student's new data through all four models in real time."
+
+[Watch the alert ticker update — point to it]
+
+"You can see the alert ticker beginning to populate as the streaming engine
+detects rule violations."
+
+─── STEP 3: ALERTS PAGE (45 seconds) ───
+
+[Click Alerts page]
+
+"Let me switch to the Alerts page. These alerts are generated in real time
+by our six-rule Alert Engine. Each rule is defined in a YAML configuration
+file — non-technical staff can change thresholds without touching code."
+
+[Point to a specific alert on screen]
+
+"Look at this alert: attendance_drop, severity MEDIUM, for student S0042.
+This fired because this student's attendance this week dropped below 70 percent.
+Notice the severity badge — medium in yellow. A CRITICAL alert would mean
+the CNN detected sustained high risk for three or more weeks."
+
+[Click Acknowledge on one alert]
+
+"I can acknowledge an alert — this calls POST /alerts/{id}/acknowledge and
+marks it as resolved in the database."
+
+─── STEP 4: STUDENT PROFILE (1 minute) ───
+
+[Navigate to Roster → click on a High Risk student]
+
+"Let me go to the Roster page. Here we have all 500 students in a filterable
+table. I will filter by High Risk."
+
+[Apply High Risk filter, click on a student]
+
+"I will open student S0042's profile."
+
+"This page pulls data from GET /students/S0042/profile — a single API call
+that returns the student record, all weekly records, and all alerts."
+
+[Point to weekly trend charts]
+
+"These Plotly charts show the eight-week behavioral trends. Notice the
+attendance line — it starts above 80 percent and slopes downward to the 60s.
+The CNN is the model that detected this sustained downward pattern."
+
+[Point to recommendations]
+
+"Below the charts, you see the automatically generated recommendations with
+priority scores. The recommendation engine mapped the attendance alert to
+an attendance_intervention action, weighted by the medium severity multiplier."
+
+[Show the advisor action logger]
+
+"The advisor can log what they actually did here — the system records every
+human response in the advisor_actions table, creating an audit trail."
+
+─── STEP 5: MODEL PERFORMANCE PAGE (45 seconds) ───
+
+[Navigate to Model Performance]
+
+"The Model Performance page shows the full evaluation results for every model
+we trained. At the top is the metrics comparison table — accuracy, precision,
+recall, and F1 for classifiers; MAE, RMSE, and R-squared for regressors."
+
+[Point to confusion matrix or ROC curve if loaded]
+
+"These figures were generated during the evaluate stage of our DVC pipeline
+and are served through GET /models/figures. The model registry panel shows
+which models are in production — Ridge for regression, MLP for classification."
+
+─── STEP 6: AI ADVISOR (1 minute 30 seconds) ───
+
+[Navigate to AI Advisor page]
+
+"This is the AI Advisor — the most technically exciting part of our project.
+It uses Retrieval-Augmented Generation, or RAG."
+
+[Type student ID S0042 in the Student ID box and load]
+
+"I will load student S0042's context. The system fetches their profile from
+the API and the AI will use their actual data when answering."
+
+[Click "Generate AI Recommendations" button]
+
+"I clicked Generate AI Recommendations. Here is what happens under the hood:"
+
+"First, our sentence-transformers model encodes the question into a
+384-dimensional vector. Then FAISS — Facebook AI Similarity Search — searches
+our 15 expert intervention documents and returns the three most semantically
+relevant ones. Then we build a prompt containing those three documents plus
+this student's actual risk class, attendance, quiz scores, and alerts —
+and we send it to Anthropic's Claude claude-haiku-4-5 via their API."
+
+[Wait for response to appear]
+
+"Claude generates a response grounded in real documents and real student data —
+not hallucinated generic advice. You can see the Sources Used expander shows
+exactly which knowledge base articles were retrieved."
+
+[Type a quick question in the chat]
+
+"I can also ask a free-text question — for example:"
+[Type: "What should I say to this student in our first meeting?"]
+
+"And Claude gives a specific, grounded answer in about one second."
+
+================================================================================
+PART 5 — WRAP-UP
+[Speaker: Sumanth | Time: 8:30 – 10:00]
+================================================================================
+
+"Thank you Viraj. Let me close with what this project demonstrates."
+
+"From a course-coverage perspective, we implemented every required topic:"
+"— Multivariate Linear Regression and Ridge Regression"
+"— K-Nearest Neighbors and Decision Tree for both regression and classification"
+"— Logistic Regression, Gaussian Naive Bayes"
+"— Single Layer Perceptron as the baseline neural network"
+"— Multi-Layer Perceptron as the full deep learning classifier"
+"— Fine-tuned ANNs across three hyperparameter configurations"
+"— CNN — convolutional neural network — for temporal sequence classification"
+"— K-Means unsupervised clustering"
+"— Five-fold stratified cross-validation on all classical models"
+"— Gradient descent with Adam optimizer, loss curve visualization"
+
+"From a systems perspective:"
+"— A five-stage reproducible DVC pipeline"
+"— A real-time streaming system with producer-consumer threading"
+"— A configurable YAML-based alert engine with six rules"
+"— A priority-ranked recommendation engine with fatigue prevention"
+"— A RAG AI Advisor using FAISS, sentence-transformers, and Anthropic Claude"
+"— A FastAPI REST backend with 20 plus endpoints"
+"— A Streamlit six-page dashboard with Plotly interactive charts"
+"— A SQLite database with five relational tables and SQLAlchemy ORM"
+
+"This is SentinelEDU. Thank you."
+
+[Pause — let professor begin questions]
+
+
+================================================================================
+PART 6 — EXPECTED PROFESSOR QUESTIONS & ANSWERS
+================================================================================
+
+Prepare these answers. Any one of you can answer. Discuss who handles which
+topics before the presentation.
+
+────────────────────────────────────────────────────────────────────────────────
+Q1: "Why did you choose Ridge Regression over plain Linear Regression?"
+────────────────────────────────────────────────────────────────────────────────
+
+ANSWER (Sumanth):
+"In our dataset, G1 and G2 — the first and second period grades — are highly
+correlated with each other and with the target G3. Plain Ordinary Least Squares
+Linear Regression struggles when input features are correlated because it can
+assign extreme coefficients to both correlated features, making the model
+unstable. Ridge Regression adds an L2 penalty — it subtracts lambda times the
+sum of squared coefficients from the loss function. This shrinks correlated
+coefficients toward each other, producing a more stable and generalizable model.
+We tested alpha = 1.0 as our regularization strength. The result: MAE of
+approximately 0.8 on a 20-point scale, which means our grade predictions are
+off by less than one point on average."
+
+────────────────────────────────────────────────────────────────────────────────
+Q2: "How does the 1D-CNN detect temporal patterns? Explain the convolution."
+────────────────────────────────────────────────────────────────────────────────
+
+ANSWER (Sumanth):
+"Our CNN takes as input an 8 × 5 matrix — 8 weeks of time steps, 5 behavioral
+features per week: attendance, quiz score, submission rate, LMS logins, and
+late count. A Conv1D layer with kernel size 3 slides a window of width 3 along
+the 8 time steps. At each position, the filter computes a dot product between
+its 3 × 5 = 15 weights and the 3 time steps it covers. This produces a
+single scalar — the 'activation' at that position. Different filters learn to
+activate strongly at different patterns: one filter might activate when it sees
+three consecutive drops in attendance; another when quiz scores spike then drop.
+The first Conv1D layer has 32 such filters, the second has 64. GlobalMaxPooling
+then takes the maximum activation across all time steps for each filter —
+effectively asking 'did this pattern appear anywhere in this student's history?'
+The MLP cannot do this because it receives a flat average feature vector with
+no temporal ordering. The CNN explicitly models the sequence."
+
+────────────────────────────────────────────────────────────────────────────────
+Q3: "What is RAG and why did you use it instead of just prompting an LLM?"
+────────────────────────────────────────────────────────────────────────────────
+
+ANSWER (Viraj):
+"RAG stands for Retrieval-Augmented Generation. If we simply asked Claude
+'how do I help a high-risk student,' it would give generic advice from its
+training data — potentially outdated, uncited, and with no knowledge of
+this specific student's actual numbers. RAG solves two problems at once.
+First, it grounds the response in our curated knowledge base of 15 expert
+intervention documents. Second, it injects the student's actual live data —
+risk class, attendance percentage, quiz scores, active alerts — directly into
+the prompt. So Claude's answer is grounded in verified documents AND personalized
+to the specific student. Without retrieval, this would require either
+fine-tuning the model on our domain knowledge — expensive and slow — or
+stuffing all 15 documents into every prompt — wasteful. FAISS retrieval
+means we send only the 3 most relevant documents, keeping the prompt focused."
+
+────────────────────────────────────────────────────────────────────────────────
+Q4: "Explain how FAISS works for document retrieval."
+────────────────────────────────────────────────────────────────────────────────
+
+ANSWER (Viraj):
+"FAISS is Facebook AI Similarity Search — a library for efficient nearest-neighbor
+search in high-dimensional vector spaces. Here is the process step by step.
+First, during server startup, we pass each of our 15 knowledge base documents
+through the sentence-transformers model all-MiniLM-L6-v2, which encodes each
+document as a 384-dimensional floating-point vector — essentially a coordinate
+in 384-dimensional semantic space. Documents with similar meaning end up close
+together in this space. These 15 vectors are loaded into a FAISS IndexFlatL2
+index. When an advisor asks a question, we embed the question into the same
+384-dimensional space using the same model. FAISS then performs an exact
+L2-distance search — it measures the Euclidean distance between the question
+vector and all 15 document vectors and returns the indices of the 3 nearest
+ones. Those 3 documents are retrieved and passed to Claude as context.
+We use IndexFlatL2 — the 'flat' means exact search, not approximate. For
+15 documents this is instantaneous. For millions of documents, FAISS provides
+approximate methods like IVF or HNSW."
+
+────────────────────────────────────────────────────────────────────────────────
+Q5: "What is the difference between your MLP and the SLP?"
+────────────────────────────────────────────────────────────────────────────────
+
+ANSWER (Sumanth):
+"A Single Layer Perceptron has no hidden layers — it goes directly from input
+to output. Mathematically it computes output = softmax(W × input + b), which
+is a linear transformation followed by softmax. This means the SLP can only
+learn linearly separable decision boundaries. If the boundary between Low Risk
+and High Risk students is not a straight hyperplane in 33-dimensional feature
+space — and it almost certainly is not — the SLP will fail. The MLP adds
+hidden layers with non-linear activation functions between input and output.
+Our MLP has three hidden layers: 128, 64, and 32 neurons, each using ReLU
+activation — Rectified Linear Unit, which outputs max(0, x). These non-linear
+activations, composed through multiple layers, allow the network to learn
+arbitrarily complex decision boundaries. The Universal Approximation Theorem
+guarantees that a sufficiently wide single hidden layer can approximate any
+continuous function. Our three-layer MLP learns patterns the SLP cannot represent."
+
+────────────────────────────────────────────────────────────────────────────────
+Q6: "How did you implement cross-validation and why is it necessary?"
+────────────────────────────────────────────────────────────────────────────────
+
+ANSWER (Sumanth):
+"We used five-fold stratified cross-validation for all classical models.
+Stratified means the class distribution — the proportion of Low, Medium, High,
+Critical students — is preserved in every fold. Here is why this matters: if
+our dataset happened to have all Critical students in the test fold, the model
+would look worse than it actually is. With only 649 students total, a single
+80/20 split gives a test set of about 130 students. One unlucky split could
+significantly misrepresent the model's true performance. Five-fold CV trains
+five separate models, each on 80 percent of the data, testing on the remaining
+20 percent in rotation. The five test scores are averaged, giving a much more
+reliable performance estimate with lower variance. The code lives in
+src/evaluation/cross_validation.py and uses scikit-learn's StratifiedKFold."
+
+────────────────────────────────────────────────────────────────────────────────
+Q7: "How does the alert engine work? Walk me through a specific alert firing."
+────────────────────────────────────────────────────────────────────────────────
+
+ANSWER (Param):
+"Alert rules are defined in thresholds.yaml. Take the attendance_drop rule:
+condition_type is threshold, feature is weekly_attendance_pct, operator is
+less than, value is 70, severity is medium, cooldown_hours is 24.
+When the streaming consumer processes a new event for student S0042 with
+attendance 62 percent, it calls the AlertEngine. The engine loads all six
+rules from configuration and calls evaluate_rule for each one. For
+attendance_drop, it checks: is weekly_attendance_pct in the feature map?
+Yes, 62.1. Is 62.1 less than 70? Yes. Rule fires. Before inserting an alert,
+the engine checks cooldown: was an attendance_drop alert already fired for
+S0042 in the last 24 hours? If no, it inserts an Alert row into the database.
+It then passes this alert to the RecommendationEngine, which looks up what
+actions map to attendance_drop in thresholds.yaml — attendance_intervention
+at base priority 0.70. It multiplies by the medium severity multiplier of 0.60,
+giving a final priority of 0.42. It checks the 14-day fatigue window — has
+this action been recommended to S0042 in the last 14 days? If not, it inserts
+a Recommendation row. The alert appears on the dashboard's Alerts page
+on the next refresh."
+
+────────────────────────────────────────────────────────────────────────────────
+Q8: "Why K-Means with k=4? How did you choose k?"
+────────────────────────────────────────────────────────────────────────────────
+
+ANSWER (Sumanth):
+"We chose k=4 for two reasons: mathematical and semantic. Mathematically, we
+tested k values from 2 to 6 using the silhouette score — a metric that measures
+how similar each student is to its own cluster versus other clusters. A silhouette
+score of 1 means perfect separation; 0 means clusters overlap. k=4 produced
+the best silhouette score while keeping clusters large enough to be statistically
+meaningful. Semantically, k=4 maps naturally to the four risk categories used
+elsewhere in the system — Low, Medium, High, Critical — making it interpretable
+for advisors. The four segments we discovered: Consistent High Performers,
+Improving Students, Disengaged Students, and High-Risk Students. These are
+emergent from the data — we did not tell the algorithm what to look for.
+K-Means converges when cluster assignments stop changing. We set n_init=10
+to run K-Means 10 times with different random initializations and pick the
+run with the lowest inertia — this avoids local optima."
+
+────────────────────────────────────────────────────────────────────────────────
+Q9: "What is the role of Dropout in your MLP? Why 30%?"
+────────────────────────────────────────────────────────────────────────────────
+
+ANSWER (Sumanth):
+"Dropout is a regularization technique introduced by Srivastava et al. in 2014.
+During each training step, Dropout randomly sets 30 percent of neurons in a
+layer to zero — they do not contribute to the forward pass or receive gradients
+in the backward pass. The effect is that no single neuron can rely on the
+presence of specific other neurons. This forces the network to learn redundant
+representations — multiple pathways to the same conclusion. At inference time,
+all neurons are active but their outputs are scaled by the keep probability
+(0.70) to maintain the expected activation magnitude. We chose 30 percent
+because it is the standard starting point for dense layers on tabular data.
+We tested 20, 30, and 40 percent in our fine-tuned ANN configurations and
+30 percent provided the best validation accuracy without over-regularizing
+and losing model capacity."
+
+────────────────────────────────────────────────────────────────────────────────
+Q10: "What is early stopping and why did you use it?"
+────────────────────────────────────────────────────────────────────────────────
+
+ANSWER (Sumanth):
+"Early stopping is a training technique that monitors the validation loss during
+training and stops training when the validation loss has not improved for a
+specified number of consecutive epochs — called the patience parameter. We set
+patience to 10. Without early stopping, if we train for all 60 epochs, the
+model may continue fitting the training data long after it has peaked on
+validation data — this is overfitting. The training loss keeps decreasing but
+the validation loss starts increasing. Early stopping saves the model weights
+from the best validation epoch and stops training there. With only 519 training
+students, our network would overfit in roughly 20–30 epochs without this
+mechanism. Early stopping effectively provides free regularization."
+
+────────────────────────────────────────────────────────────────────────────────
+Q11: "Explain the producer-consumer pattern in your streaming system."
+────────────────────────────────────────────────────────────────────────────────
+
+ANSWER (Viraj):
+"The producer-consumer pattern is a classic concurrency design. We have two
+independent threads that communicate through a shared, thread-safe Queue.
+The Producer thread — our StreamProducer class, which extends threading.Thread
+— reads events from the JSONL file at two events per second and puts JSON
+dictionaries into the Queue. The Consumer thread — running as part of the API
+— continuously reads from the same Queue and processes each event: updates the
+Feature Store, runs inference, checks alert rules, writes to the database.
+The Queue acts as a buffer: if the Consumer is busy with a slow database write,
+the Producer does not block — it keeps adding events to the Queue up to the
+maxsize of 1000. We mark the Producer as a daemon thread, meaning it
+automatically stops when the main application exits. Thread safety is handled
+by a threading.Lock for the singleton InferenceService and by the Queue itself
+which is implemented with an internal lock. We chose Python threading over
+Kafka because this is a simulation — Python threading Queue is sufficient for
+two events per second and requires no external infrastructure."
+
+────────────────────────────────────────────────────────────────────────────────
+Q12: "What is DVC and why did you use it instead of just running Python scripts?"
+────────────────────────────────────────────────────────────────────────────────
+
+ANSWER (Param):
+"DVC stands for Data Version Control. It extends Git to handle large files and
+machine learning pipelines. In dvc.yaml we define each stage with three sections:
+cmd — the Python command to run, deps — the input files that, if changed,
+invalidate this stage, and outs — the output files that DVC tracks. When we
+run dvc repro, DVC checks the hash of every dep file against what it had last
+run. If nothing changed, the stage is skipped. If the raw CSV changed, DVC
+re-runs preprocess, train, and evaluate — but only those stages, not load_data.
+Without DVC, running five Python scripts in order every time you change one
+hyperparameter would be tedious and error-prone. DVC guarantees reproducibility:
+clone the repo, run dvc repro, and you get bitwise-identical results. It also
+integrates with Git: you can go back to any commit and reproduce the exact
+models trained at that point."
+
+────────────────────────────────────────────────────────────────────────────────
+Q13: "Why SQLite and not PostgreSQL or MySQL for the database?"
+────────────────────────────────────────────────────────────────────────────────
+
+ANSWER (Param):
+"For a development, demonstration, and academic project this is the correct
+choice. SQLite is a serverless database — it stores everything in one file,
+sentinel.db, and any Python program can open it directly using the sqlite3
+module. No server process to start, no port to configure, no credentials to
+manage. It handles hundreds of reads and writes per second, which is more
+than sufficient for 500 students at our streaming rate. PostgreSQL would require
+installing a database server, creating a user, creating a database, configuring
+connection pooling — significant operational overhead for no performance benefit
+at this scale. Critically, our SQLAlchemy ORM abstracts the database entirely.
+To migrate to PostgreSQL in production, we change exactly one line in
+settings.yaml: the database URL from sqlite:///./sentinel.db to
+postgresql://user:password@host/dbname. Zero application code changes."
+
+────────────────────────────────────────────────────────────────────────────────
+Q14: "How does the Preprocessor prevent data leakage?"
+────────────────────────────────────────────────────────────────────────────────
+
+ANSWER (Sumanth):
+"Data leakage occurs when information from the test set contaminates the
+training process. The most common form: fitting the StandardScaler on the
+full dataset before splitting into train and test. If you do this, the scaler
+has seen the test data's mean and standard deviation during fitting. The test
+set is no longer truly held-out. Our Preprocessor is fitted exclusively on
+training data — the 80 percent split. The mean and standard deviation computed
+by StandardScaler, and the category vocabulary learned by OneHotEncoder, come
+only from training examples. The fitted Preprocessor is then saved to disk as
+preprocessor.pkl using Joblib. When we evaluate on the test set, we call
+preprocessor.transform() — not preprocessor.fit_transform() — so the scaler
+uses training-set statistics to transform test-set values. The same saved
+preprocessor is loaded by the FastAPI server at startup and applied to every
+live streaming event. This is the only correct way to ensure
+training-serving consistency."
+
+────────────────────────────────────────────────────────────────────────────────
+Q15: "What is the Adam optimizer and how does it differ from plain gradient descent?"
+────────────────────────────────────────────────────────────────────────────────
+
+ANSWER (Sumanth):
+"Adam stands for Adaptive Moment Estimation. Plain Stochastic Gradient Descent
+uses a single global learning rate for every parameter: theta = theta - lr × gradient.
+This has two problems: the same learning rate for sparse and dense features is
+suboptimal, and oscillations in narrow directions slow convergence. Adam maintains
+two moving averages per parameter: the first moment — a running average of the
+gradient — and the second moment — a running average of the squared gradient.
+The update rule becomes: theta = theta - (lr / sqrt(v_hat)) × m_hat, where
+m_hat is the bias-corrected first moment and v_hat is the bias-corrected second
+moment. The practical effect: parameters with large, consistent gradients get
+smaller updates (preventing oscillation); parameters with small, sporadic
+gradients get larger updates (helping sparse features train). Adam converges
+faster than SGD, requires less learning rate tuning, and is the de-facto
+standard optimizer for deep learning on tabular data. We used learning_rate=0.001,
+which is Adam's recommended default."
+
+────────────────────────────────────────────────────────────────────────────────
+Q16: "How would you scale this to a real production environment?"
+────────────────────────────────────────────────────────────────────────────────
+
+ANSWER (Param):
+"Several changes would be needed. For the streaming layer: replace the Python
+threading Queue with Apache Kafka or Redis Streams, which handle millions of
+events per second with persistence, replay, and fault tolerance. For the database:
+swap SQLite for PostgreSQL with connection pooling via SQLAlchemy's connection
+pool. We designed with SQLAlchemy ORM so this is a one-line configuration
+change. For the models: deploy inference as a separate microservice — for example
+TensorFlow Serving for the Keras models — to allow horizontal scaling. For the
+RAG system: replace FAISS IndexFlatL2 with a production vector database like
+Pinecone or Weaviate that supports distributed search across millions of
+documents. For the API: deploy FastAPI behind an nginx reverse proxy with
+multiple Uvicorn workers. For monitoring: add Prometheus metrics and Grafana
+dashboards. The architecture was deliberately designed in layers with clean
+interfaces specifically to make each layer swappable independently."
+
+────────────────────────────────────────────────────────────────────────────────
+Q17: "What are the limitations of your system?"
+────────────────────────────────────────────────────────────────────────────────
+
+ANSWER (Param):
+"We have four honest limitations. First, the dataset: 649 Portuguese students
+from two schools. The models may not generalize to different cultural contexts,
+grading systems, or institution sizes. Second, the streaming is simulated.
+Real production data would come from an actual LMS like Canvas or Moodle via
+their APIs. Third, our recommendations are rule-based. A truly adaptive system
+would train a reinforcement learning agent on intervention outcomes — which
+actions actually led to improved grades over time. We do not have that outcome
+data. Fourth, we did not conduct a fairness or bias audit. The models might
+perform differently for different demographic groups — sex, parental education —
+and a production system would require a formal fairness evaluation before
+deployment. We document these as future work in the README."
+
+────────────────────────────────────────────────────────────────────────────────
+Q18: "Explain the softmax function and why it is used for the output layer."
+────────────────────────────────────────────────────────────────────────────────
+
+ANSWER (Sumanth):
+"The output layer of our MLP and CNN has four neurons — one per risk class.
+Before softmax, these neurons output raw scores called logits, which can be
+any real number. Logits are not probabilities — they do not sum to 1 and can
+be negative. The softmax function converts logits into a valid probability
+distribution: softmax(z_i) = exp(z_i) / sum(exp(z_j) for all j). The exponential
+ensures all outputs are positive; dividing by the sum ensures they sum to 1.0.
+So if the logits are [1.2, 0.3, 3.1, 0.8], softmax gives approximately
+[0.09, 0.04, 0.72, 0.15] — the model is 72 percent confident this student
+is High Risk. The maximum value gives the predicted class; that maximum value
+is the confidence score displayed on the dashboard. During training, we use
+sparse categorical cross-entropy loss, which is mathematically equivalent to
+the negative log of the softmax probability for the true class."
+
+────────────────────────────────────────────────────────────────────────────────
+Q19: "What is OneHotEncoding and why can't you just use integer encoding?"
+────────────────────────────────────────────────────────────────────────────────
+
+ANSWER (Sumanth):
+"Integer encoding assigns a number to each category: school_GP=0, school_MS=1.
+The problem is that ML models interpret these as ordered: 1 > 0, implying
+school_MS is somehow greater than school_GP. For truly nominal categories —
+where there is no meaningful ordering — this introduces false mathematical
+relationships that corrupt the model. OneHotEncoding creates one binary column
+per category value: school_GP=[1,0] and school_MS=[0,1]. The distance between
+any two schools in this space is always sqrt(2) — they are equidistant.
+No false ordering is imposed. The downside is dimensionality increase: a column
+with 10 unique values becomes 10 binary columns. With our nominal features —
+school, sex, address, family size, parent status, support variables — this
+expansion is manageable. We use handle_unknown='ignore' so that if a new
+school name appears in live data, the encoder produces all zeros rather than
+crashing."
+
+────────────────────────────────────────────────────────────────────────────────
+Q20: "How does the recommendation engine prevent intervention fatigue?"
+────────────────────────────────────────────────────────────────────────────────
+
+ANSWER (Param):
+"Intervention fatigue is a real problem in advisory systems: if the system
+recommends 'Schedule a meeting' every hour for the same student, advisors
+start ignoring all recommendations. Our RecommendationEngine implements a
+14-day fatigue window. Before generating any recommendation, it queries the
+recommendations table: has this exact action — for example advisor_meeting —
+been recommended for this specific student in the last 14 days? This uses a
+SQLAlchemy query with a filter on the created_at timestamp. If a recent
+recommendation exists, we skip generating a new one and log a debug message:
+fatigue skip. If no recent recommendation exists, we generate a new one.
+The 14-day window is configurable. This ensures that the recommendation queue
+stays fresh and actionable — advisors see new, relevant suggestions each time
+rather than a backlog of repeated identical items."
+
+================================================================================
+QUICK CHEAT SHEET — KEY NUMBERS TO REMEMBER
+================================================================================
+
+  Dataset:          649 students, 33 features, UCI ML Repository
+  Weekly records:   6,000 in database (500 students × 8 weeks + augmentation)
+  Ridge MAE:        ≈ 0.8 on a 0–20 scale  (R² ≈ 0.85)
+  MLP layers:       128 → 64 → 32 → 4 (Softmax)
+  CNN input:        8 weeks × 5 features = 8×5 matrix
+  CNN filters:      Conv1D(32) → Conv1D(64) → GlobalMaxPool → Dense(32) → 4
+  KMeans clusters:  k = 4 behavioral segments
+  Cross-validation: 5-fold stratified
+  Alert rules:      6 rules (threshold, slope, compound condition types)
+  Cooldown:         24 hours (critical: 12 hours)
+  Fatigue window:   14 days
+  RAG documents:    15 documents, 8 categories
+  Embedding dim:    384 (all-MiniLM-L6-v2)
+  FAISS top-k:      3 documents retrieved per query
+  Claude model:     claude-haiku-4-5-20251001
+  API endpoints:    20+ REST endpoints on port 8001
+  Dashboard:        6 pages on port 8501
+  DB tables:        5 (students, weekly_records, alerts, recommendations, advisor_actions)
+  Streaming rate:   2 events/second
+  Queue maxsize:    1000 events
+
+================================================================================
+END OF DEMO SCRIPT
+================================================================================
